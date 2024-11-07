@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-
+using System.Runtime.InteropServices;
 using SharpGLTF.Memory;
 
 using VALIDATIONCTX = SharpGLTF.Validation.ValidationContext;
@@ -149,7 +149,32 @@ namespace SharpGLTF.Schema2
             return base.GetLogicalChildren().ConcatElements(_sparse);
         }
 
-        public void UpdateBounds()
+        public void UpdateBounds() 
+        {
+            this._min.Clear();
+            this._max.Clear();
+
+            if (this.Count == 0) return;
+
+            // With the current limitations of the serializer, we can only handle floating point values.
+            if (this.Encoding != EncodingType.FLOAT) return;
+
+            // https://github.com/KhronosGroup/glTF-Validator/issues/79
+
+            var dimensions = this.Dimensions.DimCount();
+            
+            // Interpret SourceBufferView.Content as a Span<float> without copying
+            var floatSpan = MemoryMarshal.Cast<byte, float>(this.SourceBufferView.Content);
+            (float[] min, float[] max) = VectorMinMax.FindMinMax(floatSpan, dimensions: dimensions);
+
+            
+            for (var i = 0; i < min.Length; i++) {
+                _min.Add(min[i]);
+                _max.Add(max[i]);
+            }
+        }
+        
+        public void UpdateBoundsOld()
         {
             this._min.Clear();
             this._max.Clear();
@@ -169,18 +194,18 @@ namespace SharpGLTF.Schema2
                 this._max.Add(double.MinValue);
             }
 
-            var array = new MultiArray(this.SourceBufferView.Content, this.ByteOffset, this.Count, this.SourceBufferView.ByteStride, dimensions, this.Encoding, false);
+            // Interpret SourceBufferView.Content as a Span<float> without copying
+            var floatSpan = MemoryMarshal.Cast<byte, float>(this.SourceBufferView.Content);
 
-            var current = new float[dimensions];
-
-            for (int i = 0; i < array.Count; ++i)
+            // Iterate over the span directly, assuming the data is in the expected float format
+            for (int i = 0; i < this.Count; i += dimensions)
             {
-                array.CopyItemTo(i, current);
-
-                for (int j = 0; j < current.Length; ++j)
+                for (int j = 0; j < dimensions; ++j)
                 {
-                    this._min[j] = Math.Min(this._min[j], current[j]);
-                    this._max[j] = Math.Max(this._max[j], current[j]);
+                    // Calculate the index based on the stride and dimensions
+                    var value = floatSpan[i * dimensions + j];
+                    this._min[j] = Math.Min(this._min[j], value);
+                    this._max[j] = Math.Max(this._max[j], value);
                 }
             }
         }
