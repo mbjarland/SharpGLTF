@@ -166,7 +166,6 @@ namespace SharpGLTF.Schema2
             // Interpret SourceBufferView.Content as a Span<float> without copying
             var floatSpan = MemoryMarshal.Cast<byte, float>(this.SourceBufferView.Content);
             (float[] min, float[] max) = VectorMinMax.FindMinMax(floatSpan, dimensions: dimensions);
-
             
             for (var i = 0; i < min.Length; i++) {
                 _min.Add(min[i]);
