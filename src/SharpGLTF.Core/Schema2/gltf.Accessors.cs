@@ -149,6 +149,7 @@ namespace SharpGLTF.Schema2
             return base.GetLogicalChildren().ConcatElements(_sparse);
         }
 
+#if NET6_0_OR_GREATER
         public void UpdateBounds() 
         {
             this._min.Clear();
@@ -173,8 +174,8 @@ namespace SharpGLTF.Schema2
                 _max.Add(max[i]);
             }
         }
-        
-        public void UpdateBoundsOld()
+#else        
+        public void UpdateBounds()
         {
             this._min.Clear();
             this._max.Clear();
@@ -209,6 +210,7 @@ namespace SharpGLTF.Schema2
                 }
             }
         }
+#endif
 
         #endregion
 
