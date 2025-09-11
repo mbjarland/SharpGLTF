@@ -45,11 +45,12 @@ namespace SharpGLTF.Schema2
         RGB,
         RGBA,
 
+        Minimum, Maximum,
+
         NormalScale,
+
         OcclusionStrength,
         EmissiveStrength,
-
-        Minimum, Maximum,
 
         IndexOfRefraction,
 
@@ -62,6 +63,11 @@ namespace SharpGLTF.Schema2
         TransmissionFactor,
         IridescenceFactor,
         AttenuationDistance,
+        DiffuseTransmissionFactor,
+
+        AnisotropyStrength,
+
+        AnisotropyRotation,
     }
 
     [System.Diagnostics.DebuggerDisplay("{_Key} = {Value}")]

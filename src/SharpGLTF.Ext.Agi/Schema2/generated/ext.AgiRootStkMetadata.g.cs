@@ -23,6 +23,11 @@ using System.Text;
 using System.Numerics;
 using System.Text.Json;
 
+using JSONREADER = System.Text.Json.Utf8JsonReader;
+using JSONWRITER = System.Text.Json.Utf8JsonWriter;
+using FIELDINFO = SharpGLTF.Reflection.FieldInfo;
+
+
 namespace SharpGLTF.Schema2.AGI
 {
 	using Collections;
@@ -37,29 +42,59 @@ namespace SharpGLTF.Schema2.AGI
 	partial class AgiStkSolarPanelGroup : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "solarPanelGroup";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "efficiency";
+			yield return "name";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "efficiency": value = FIELDINFO.From("efficiency",this, instance => instance._efficiency); return true;
+				case "name": value = FIELDINFO.From("name",this, instance => instance._name); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private const Double _efficiencyMinimum = 0;
 		private const Double _efficiencyMaximum = 100;
 		private Double _efficiency;
 		
 		private String _name;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "efficiency", _efficiency);
 			SerializeProperty(writer, "name", _name);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "efficiency": _efficiency = DeserializePropertyValue<Double>(ref reader); break;
-				case "name": _name = DeserializePropertyValue<String>(ref reader); break;
+				case "efficiency": DeserializePropertyValue<AgiStkSolarPanelGroup, Double>(ref reader, this, out _efficiency); break;
+				case "name": DeserializePropertyValue<AgiStkSolarPanelGroup, String>(ref reader, this, out _name); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -73,24 +108,52 @@ namespace SharpGLTF.Schema2.AGI
 	partial class AgiRootStkMetadata : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "AGI_stk_metadata";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "solarPanelGroups";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "solarPanelGroups": value = FIELDINFO.From("solarPanelGroups",this, instance => instance._solarPanelGroups); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private const int _solarPanelGroupsMinItems = 1;
 		private ChildrenList<AgiStkSolarPanelGroup,AgiRootStkMetadata> _solarPanelGroups;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "solarPanelGroups", _solarPanelGroups, _solarPanelGroupsMinItems);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "solarPanelGroups": DeserializePropertyList<AgiStkSolarPanelGroup>(ref reader, _solarPanelGroups); break;
+				case "solarPanelGroups": DeserializePropertyList<AgiRootStkMetadata, AgiStkSolarPanelGroup>(ref reader, this, _solarPanelGroups); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 

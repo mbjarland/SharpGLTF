@@ -10,21 +10,34 @@ namespace SharpGLTF.Memory
     /// </summary>
     /// <typeparam name="T">An unmanage structure type.</typeparam>
     [System.Diagnostics.DebuggerDisplay("Sparse {typeof(T).Name} Accessor {Count}")]
-    public readonly struct SparseArray<T> : IList<T>, IReadOnlyList<T>
+    public sealed class SparseArray<T> : IAccessorArray<T>
         where T : unmanaged
     {
         #region lifecycle
 
-        public SparseArray(IList<T> bottom, IList<T> top, IntegerArray topMapping)
+        public SparseArray(IReadOnlyList<T> denseValues, IReadOnlyList<T> sparseValues, IReadOnlyList<uint> sparseKeys)
         {
-            _BottomItems = bottom;
-            _TopItems = top;
-            _Mapping = new Dictionary<int, int>();
+            Guard.NotNull(denseValues, nameof(denseValues));
+            Guard.NotNull(sparseValues, nameof(sparseValues));
+            Guard.NotNull(sparseKeys, nameof(sparseKeys));            
+            Guard.MustBeEqualTo(sparseKeys.Count, sparseValues.Count, nameof(sparseKeys.Count));
+            Guard.MustBeLessThanOrEqualTo(sparseKeys.Count, denseValues.Count, nameof(sparseKeys.Count));
 
-            for (int val = 0; val < topMapping.Count; ++val)
+            _DenseItems = denseValues;
+            _SparseItems = sparseValues;
+
+            // expand indices for fast access
+            _SparseIndices = new Dictionary<int, int>();
+            for (int val = 0; val < sparseKeys.Count; ++val)
             {
-                var key = (int)topMapping[val];
-                _Mapping[key] = val;
+                var key = (int)sparseKeys[val];
+
+                if (key >= denseValues.Count)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sparseKeys));
+                }
+
+                _SparseIndices[key] = val;
             }
         }
 
@@ -33,13 +46,13 @@ namespace SharpGLTF.Memory
         #region data
 
         [System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-        private readonly IList<T> _BottomItems;
+        private readonly IReadOnlyList<T> _DenseItems;
 
         [System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-        private readonly IList<T> _TopItems;
+        private readonly IReadOnlyList<T> _SparseItems;
 
         [System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-        private readonly Dictionary<int, int> _Mapping;
+        private readonly Dictionary<int, int> _SparseIndices;
 
         [System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.RootHidden)]
         private T[] _DebugItems => this.ToArray();
@@ -49,13 +62,13 @@ namespace SharpGLTF.Memory
         #region API
 
         [System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-        public int Count => _BottomItems.Count;
+        public int Count => _DenseItems.Count;
 
         public bool IsReadOnly => true;
 
         public T this[int index]
         {
-            get => _Mapping.TryGetValue(index, out int topIndex) ? _TopItems[topIndex] : _BottomItems[index];
+            get => _SparseIndices.TryGetValue(index, out int topIndex) ? _SparseItems[topIndex] : _DenseItems[index];
             set => throw new NotSupportedException("Collection is read only.");
         }
 

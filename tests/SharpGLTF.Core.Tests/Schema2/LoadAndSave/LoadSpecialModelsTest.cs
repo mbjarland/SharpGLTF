@@ -66,8 +66,8 @@ namespace SharpGLTF.Schema2.LoadAndSave
             var pollyPrimitive = pollyNode.Mesh.Primitives[0];
 
             var pollyIndices = pollyPrimitive.GetIndices();
-            var pollyPositions = pollyPrimitive.GetVertices("POSITION").AsVector3Array();
-            var pollyNormals = pollyPrimitive.GetVertices("NORMAL").AsVector3Array();
+            var pollyPositions = pollyPrimitive.GetVertices<Vector3>("POSITION");
+            var pollyNormals = pollyPrimitive.GetVertices<Vector3>("NORMAL");
 
             for (int i = 0; i < pollyIndices.Count; i += 3)
             {
@@ -83,7 +83,7 @@ namespace SharpGLTF.Schema2.LoadAndSave
                 var bn = pollyNormals[b];
                 var cn = pollyNormals[c];
 
-                TestContext.WriteLine($"Triangle {ap} {an} {bp} {bn} {cp} {cn}");
+                TestContext.Out.WriteLine($"Triangle {ap} {an} {bp} {bn} {cp} {cn}");
             }
 
             // create a clone and apply a global axis transform.

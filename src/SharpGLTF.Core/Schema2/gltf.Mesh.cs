@@ -67,12 +67,7 @@ namespace SharpGLTF.Schema2
 
             _weights.SetMorphWeights(count, weights);
         }
-
-        protected override IEnumerable<ExtraProperties> GetLogicalChildren()
-        {
-            return base.GetLogicalChildren().Concat(_primitives);
-        }
-
+        
         /// <summary>
         /// Creates a new <see cref="MeshPrimitive"/> instance
         /// and adds it to the current <see cref="Mesh"/>.
@@ -102,13 +97,21 @@ namespace SharpGLTF.Schema2
 
         protected override void OnValidateContent(Validation.ValidationContext validate)
         {
+            // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#morph-targets
+
+            int morphsCount = -1;
+
+            foreach (var p in this.Primitives)
+            {
+                if (morphsCount < 0) morphsCount = p.MorphTargetsCount;
+
+                validate.GetContext(p).AreEqual("MorphTargets.Count", p.MorphTargetsCount, morphsCount);
+            }
+
             if (_weights.Count > 0)
             {
-                foreach (var p in this.Primitives)
-                {
-                    validate.GetContext(p).AreEqual("MorphTargetsCount", p.MorphTargetsCount, _weights.Count);
-                }
-            }
+                validate.AreEqual("Weights", morphsCount, _weights.Count);
+            }            
 
             base.OnValidateContent(validate);
         }

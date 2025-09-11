@@ -6,6 +6,7 @@ using System.Text;
 
 using SharpGLTF.Animations;
 using SharpGLTF.Collections;
+using SharpGLTF.Memory;
 using SharpGLTF.Transforms;
 using SharpGLTF.Validation;
 
@@ -66,7 +67,10 @@ namespace SharpGLTF.Schema2
     /// </remarks>
     sealed partial class AnimationSampler :
         IChildOfList<Animation>,
+        IAnimationSampler<Single>,
+        IAnimationSampler<Vector2>,
         IAnimationSampler<Vector3>,
+        IAnimationSampler<Vector4>,
         IAnimationSampler<Quaternion>,
         IAnimationSampler<SPARSE8>,
         IAnimationSampler<SEGMENT>,
@@ -116,7 +120,7 @@ namespace SharpGLTF.Schema2
         {
             get
             {
-                var keys = Input.AsScalarArray();
+                IReadOnlyList<float> keys = Input.AsScalarArray();
                 return keys.Count == 0 ? 0 : keys[keys.Count - 1];
             }
         }
@@ -125,7 +129,7 @@ namespace SharpGLTF.Schema2
 
         #region API
 
-        private Accessor _CreateInputAccessor(IReadOnlyList<Single> input)
+        private Accessor _CreateInputAccessor(ROLIST input)
         {
             Guard.NotNull(input, nameof(input));
             Guard.MustBeGreaterThan(input.Count, 0, nameof(input.Count));
@@ -135,9 +139,53 @@ namespace SharpGLTF.Schema2
             var buffer = root.CreateBufferView(input.Count * 4);
             var accessor = root.CreateAccessor("Animation.Input");
 
-            accessor.SetData(buffer, 0, input.Count, DimensionType.SCALAR, EncodingType.FLOAT, false);
+            accessor.SetData(buffer, 0, input.Count, AttributeFormat.Float1);
 
             Memory.EncodedArrayUtils._CopyTo(input, accessor.AsScalarArray());
+
+            accessor.UpdateBounds();
+
+            return accessor;
+        }
+
+        private Accessor _CreateOutputAccessor(ROLIST output)
+        {
+            Guard.NotNull(output, nameof(output));
+            Guard.MustBeGreaterThan(output.Count, 0, nameof(output.Count));
+
+            var root = LogicalParent.LogicalParent;
+
+            var buffer = root.CreateBufferView(output.Count * 4 * 1);
+
+            System.Diagnostics.Debug.Assert(buffer.ByteStride == 0);
+
+            var accessor = root.CreateAccessor("Animation.Output");
+
+            accessor.SetData(buffer, 0, output.Count, AttributeFormat.Float1);
+
+            Memory.EncodedArrayUtils._CopyTo(output, accessor.AsScalarArray());
+
+            accessor.UpdateBounds();
+
+            return accessor;
+        }
+
+        private Accessor _CreateOutputAccessor(IReadOnlyList<Vector2> output)
+        {
+            Guard.NotNull(output, nameof(output));
+            Guard.MustBeGreaterThan(output.Count, 0, nameof(output.Count));
+
+            var root = LogicalParent.LogicalParent;
+
+            var buffer = root.CreateBufferView(output.Count * 4 * 2);
+
+            System.Diagnostics.Debug.Assert(buffer.ByteStride == 0);
+
+            var accessor = root.CreateAccessor("Animation.Output");
+
+            accessor.SetData(buffer, 0, output.Count, AttributeFormat.Float2);
+
+            Memory.EncodedArrayUtils._CopyTo(output, accessor.AsVector2Array());
 
             accessor.UpdateBounds();
 
@@ -157,9 +205,31 @@ namespace SharpGLTF.Schema2
 
             var accessor = root.CreateAccessor("Animation.Output");
 
-            accessor.SetData(buffer, 0, output.Count, DimensionType.VEC3, EncodingType.FLOAT, false);
+            accessor.SetData(buffer, 0, output.Count, AttributeFormat.Float3);
 
             Memory.EncodedArrayUtils._CopyTo(output, accessor.AsVector3Array());
+
+            accessor.UpdateBounds();
+
+            return accessor;
+        }
+
+        private Accessor _CreateOutputAccessor(IReadOnlyList<Vector4> output)
+        {
+            Guard.NotNull(output, nameof(output));
+            Guard.MustBeGreaterThan(output.Count, 0, nameof(output.Count));
+
+            var root = LogicalParent.LogicalParent;
+
+            var buffer = root.CreateBufferView(output.Count * 4 * 4);
+
+            System.Diagnostics.Debug.Assert(buffer.ByteStride == 0);
+
+            var accessor = root.CreateAccessor("Animation.Output");
+
+            accessor.SetData(buffer, 0, output.Count, AttributeFormat.Float4);
+
+            Memory.EncodedArrayUtils._CopyTo(output, accessor.AsVector4Array());
 
             accessor.UpdateBounds();
 
@@ -176,7 +246,7 @@ namespace SharpGLTF.Schema2
             var buffer = root.CreateBufferView(output.Count * 4 * 4);
             var accessor = root.CreateAccessor("Animation.Output");
 
-            accessor.SetData(buffer, 0, output.Count, DimensionType.VEC4, EncodingType.FLOAT, false);
+            accessor.SetData(buffer, 0, output.Count, AttributeFormat.Float4);
 
             Memory.EncodedArrayUtils._CopyTo(output, accessor.AsQuaternionArray());
 
@@ -215,9 +285,9 @@ namespace SharpGLTF.Schema2
             var buffer = root.CreateBufferView(itemCount * 4 * itemsStride);
             var accessor = root.CreateAccessor("Animation.Output");
 
-            accessor.SetData(buffer, 0, itemCount * itemsStride, DimensionType.SCALAR, EncodingType.FLOAT, false);
+            accessor.SetData(buffer, 0, itemCount * itemsStride, AttributeFormat.Float1);
 
-            var dst = accessor.AsScalarArray();
+            IList<float> dst = accessor.AsScalarArray();
 
             for (int y = 0; y < itemCount; ++y)
             {
@@ -274,7 +344,34 @@ namespace SharpGLTF.Schema2
             return (keys, vals);
         }
 
+        internal void SetKeys(IReadOnlyDictionary<Single, Single> keyframes)
+        {
+            Guard.NotNullOrEmpty(keyframes, nameof(keyframes));
+
+            var (keys, values) = _Split(keyframes);
+            _input = this._CreateInputAccessor(keys).LogicalIndex;
+            _output = this._CreateOutputAccessor(values).LogicalIndex;
+        }
+
+        internal void SetKeys(IReadOnlyDictionary<Single, Vector2> keyframes)
+        {
+            Guard.NotNullOrEmpty(keyframes, nameof(keyframes));
+
+            var (keys, values) = _Split(keyframes);
+            _input = this._CreateInputAccessor(keys).LogicalIndex;
+            _output = this._CreateOutputAccessor(values).LogicalIndex;
+        }
+
         internal void SetKeys(IReadOnlyDictionary<Single, Vector3> keyframes)
+        {
+            Guard.NotNullOrEmpty(keyframes, nameof(keyframes));
+
+            var (keys, values) = _Split(keyframes);
+            _input = this._CreateInputAccessor(keys).LogicalIndex;
+            _output = this._CreateOutputAccessor(values).LogicalIndex;
+        }
+
+        internal void SetKeys(IReadOnlyDictionary<Single, Vector4> keyframes)
         {
             Guard.NotNullOrEmpty(keyframes, nameof(keyframes));
 
@@ -312,6 +409,42 @@ namespace SharpGLTF.Schema2
             _output = this._CreateOutputAccessor(values, itemsStride).LogicalIndex;
         }
 
+        internal void SetCubicKeys(IReadOnlyDictionary<Single, (Single TangentIn, Single Value, Single TangentOut)> keyframes)
+        {
+            Guard.NotNull(keyframes, nameof(keyframes));
+            Guard.MustBeGreaterThan(keyframes.Count, 0, nameof(keyframes.Count));
+
+            // splits the dictionary into separated input/output collections, also, the output will be flattened to plain Vector3 values.
+            var (keys, values) = _Split(keyframes);
+            System.Diagnostics.Debug.Assert(keys.Length * 3 == values.Length, "keys and values must have 1 to 3 ratio");
+
+            // fix for first incoming tangent and last outgoing tangent
+            // this might not be true for a looped animation, where first and last might be the same
+            values[0] = 0f;
+            values[values.Length - 1] = 0f;
+
+            _input = this._CreateInputAccessor(keys).LogicalIndex;
+            _output = this._CreateOutputAccessor(values).LogicalIndex;
+        }
+
+        internal void SetCubicKeys(IReadOnlyDictionary<Single, (Vector2 TangentIn, Vector2 Value, Vector2 TangentOut)> keyframes)
+        {
+            Guard.NotNull(keyframes, nameof(keyframes));
+            Guard.MustBeGreaterThan(keyframes.Count, 0, nameof(keyframes.Count));
+
+            // splits the dictionary into separated input/output collections, also, the output will be flattened to plain Vector3 values.
+            var (keys, values) = _Split(keyframes);
+            System.Diagnostics.Debug.Assert(keys.Length * 3 == values.Length, "keys and values must have 1 to 3 ratio");
+
+            // fix for first incoming tangent and last outgoing tangent
+            // this might not be true for a looped animation, where first and last might be the same
+            values[0] = Vector2.Zero;
+            values[values.Length - 1] = Vector2.Zero;
+
+            _input = this._CreateInputAccessor(keys).LogicalIndex;
+            _output = this._CreateOutputAccessor(values).LogicalIndex;
+        }
+
         internal void SetCubicKeys(IReadOnlyDictionary<Single, (Vector3 TangentIn, Vector3 Value, Vector3 TangentOut)> keyframes)
         {
             Guard.NotNull(keyframes, nameof(keyframes));
@@ -325,6 +458,24 @@ namespace SharpGLTF.Schema2
             // this might not be true for a looped animation, where first and last might be the same
             values[0] = Vector3.Zero;
             values[values.Length - 1] = Vector3.Zero;
+
+            _input = this._CreateInputAccessor(keys).LogicalIndex;
+            _output = this._CreateOutputAccessor(values).LogicalIndex;
+        }
+
+        internal void SetCubicKeys(IReadOnlyDictionary<Single, (Vector4 TangentIn, Vector4 Value, Vector4 TangentOut)> keyframes)
+        {
+            Guard.NotNull(keyframes, nameof(keyframes));
+            Guard.MustBeGreaterThan(keyframes.Count, 0, nameof(keyframes.Count));
+
+            // splits the dictionary into separated input/output collections, also, the output will be flattened to plain Vector3 values.
+            var (keys, values) = _Split(keyframes);
+            System.Diagnostics.Debug.Assert(keys.Length * 3 == values.Length, "keys and values must have 1 to 3 ratio");
+
+            // fix for first incoming tangent and last outgoing tangent
+            // this might not be true for a looped animation, where first and last might be the same
+            values[0] = Vector4.Zero;
+            values[values.Length - 1] = Vector4.Zero;
 
             _input = this._CreateInputAccessor(keys).LogicalIndex;
             _output = this._CreateOutputAccessor(values).LogicalIndex;
@@ -383,12 +534,45 @@ namespace SharpGLTF.Schema2
         }
 
         /// <inheritdoc/>
+        IEnumerable<(Single, Single)> IAnimationSampler<Single>.GetLinearKeys()
+        {
+            Guard.IsFalse(this.InterpolationMode == AnimationInterpolationMode.CUBICSPLINE, nameof(InterpolationMode));
+
+            var keys = this.Input.AsScalarArray();
+            var frames = this.Output.AsScalarArray();
+
+            return keys.Zip(frames, (key, val) => (key, val));
+        }
+
+        /// <inheritdoc/>
+        IEnumerable<(Single, Vector2)> IAnimationSampler<Vector2>.GetLinearKeys()
+        {
+            Guard.IsFalse(this.InterpolationMode == AnimationInterpolationMode.CUBICSPLINE, nameof(InterpolationMode));
+
+            var keys = this.Input.AsScalarArray();
+            var frames = this.Output.AsVector2Array();
+
+            return keys.Zip(frames, (key, val) => (key, val));
+        }
+
+        /// <inheritdoc/>
         IEnumerable<(Single, Vector3)> IAnimationSampler<Vector3>.GetLinearKeys()
         {
             Guard.IsFalse(this.InterpolationMode == AnimationInterpolationMode.CUBICSPLINE, nameof(InterpolationMode));
 
             var keys = this.Input.AsScalarArray();
             var frames = this.Output.AsVector3Array();
+
+            return keys.Zip(frames, (key, val) => (key, val));
+        }
+
+        /// <inheritdoc/>
+        IEnumerable<(Single, Vector4)> IAnimationSampler<Vector4>.GetLinearKeys()
+        {
+            Guard.IsFalse(this.InterpolationMode == AnimationInterpolationMode.CUBICSPLINE, nameof(InterpolationMode));
+
+            var keys = this.Input.AsScalarArray();
+            var frames = this.Output.AsVector4Array();
 
             return keys.Zip(frames, (key, val) => (key, val));
         }
@@ -444,12 +628,45 @@ namespace SharpGLTF.Schema2
         }
 
         /// <inheritdoc/>
+        IEnumerable<(Single, (Single, Single, Single))> IAnimationSampler<Single>.GetCubicKeys()
+        {
+            Guard.IsFalse(this.InterpolationMode != AnimationInterpolationMode.CUBICSPLINE, nameof(InterpolationMode));
+
+            var keys = this.Input.AsScalarArray();
+            var frames = _GroupByTangentValueTangent(this.Output.AsScalarArray());
+
+            return keys.Zip(frames, (key, val) => (key, val));
+        }
+
+        /// <inheritdoc/>
+        IEnumerable<(Single, (Vector2, Vector2, Vector2))> IAnimationSampler<Vector2>.GetCubicKeys()
+        {
+            Guard.IsFalse(this.InterpolationMode != AnimationInterpolationMode.CUBICSPLINE, nameof(InterpolationMode));
+
+            var keys = this.Input.AsScalarArray();
+            var frames = _GroupByTangentValueTangent(this.Output.AsVector2Array());
+
+            return keys.Zip(frames, (key, val) => (key, val));
+        }
+
+        /// <inheritdoc/>
         IEnumerable<(Single, (Vector3, Vector3, Vector3))> IAnimationSampler<Vector3>.GetCubicKeys()
         {
             Guard.IsFalse(this.InterpolationMode != AnimationInterpolationMode.CUBICSPLINE, nameof(InterpolationMode));
 
             var keys = this.Input.AsScalarArray();
             var frames = _GroupByTangentValueTangent(this.Output.AsVector3Array());
+
+            return keys.Zip(frames, (key, val) => (key, val));
+        }
+
+        /// <inheritdoc/>
+        IEnumerable<(Single, (Vector4, Vector4, Vector4))> IAnimationSampler<Vector4>.GetCubicKeys()
+        {
+            Guard.IsFalse(this.InterpolationMode != AnimationInterpolationMode.CUBICSPLINE, nameof(InterpolationMode));
+
+            var keys = this.Input.AsScalarArray();
+            var frames = _GroupByTangentValueTangent(this.Output.AsVector4Array());
 
             return keys.Zip(frames, (key, val) => (key, val));
         }
@@ -504,9 +721,54 @@ namespace SharpGLTF.Schema2
         }
 
         /// <inheritdoc/>
+        ICurveSampler<Single> IAnimationSampler<Single>.CreateCurveSampler(bool isolateMemory)
+        {
+            var xsampler = this as IAnimationSampler<Single>;
+
+            switch (this.InterpolationMode)
+            {
+                case AnimationInterpolationMode.STEP: return xsampler.GetLinearKeys().CreateSampler(false, isolateMemory);
+                case AnimationInterpolationMode.LINEAR: return xsampler.GetLinearKeys().CreateSampler(true, isolateMemory);
+                case AnimationInterpolationMode.CUBICSPLINE: return xsampler.GetCubicKeys().CreateSampler(isolateMemory);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        ICurveSampler<Vector2> IAnimationSampler<Vector2>.CreateCurveSampler(bool isolateMemory)
+        {
+            var xsampler = this as IAnimationSampler<Vector2>;
+
+            switch (this.InterpolationMode)
+            {
+                case AnimationInterpolationMode.STEP: return xsampler.GetLinearKeys().CreateSampler(false, isolateMemory);
+                case AnimationInterpolationMode.LINEAR: return xsampler.GetLinearKeys().CreateSampler(true, isolateMemory);
+                case AnimationInterpolationMode.CUBICSPLINE: return xsampler.GetCubicKeys().CreateSampler(isolateMemory);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         ICurveSampler<Vector3> IAnimationSampler<Vector3>.CreateCurveSampler(bool isolateMemory)
         {
             var xsampler = this as IAnimationSampler<Vector3>;
+
+            switch (this.InterpolationMode)
+            {
+                case AnimationInterpolationMode.STEP: return xsampler.GetLinearKeys().CreateSampler(false, isolateMemory);
+                case AnimationInterpolationMode.LINEAR: return xsampler.GetLinearKeys().CreateSampler(true, isolateMemory);
+                case AnimationInterpolationMode.CUBICSPLINE: return xsampler.GetCubicKeys().CreateSampler(isolateMemory);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        ICurveSampler<Vector4> IAnimationSampler<Vector4>.CreateCurveSampler(bool isolateMemory)
+        {
+            var xsampler = this as IAnimationSampler<Vector4>;
 
             switch (this.InterpolationMode)
             {

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
+using SharpGLTF.Memory;
+
 namespace SharpGLTF.Schema2
 {
     [System.Diagnostics.DebuggerDisplay("Skin[{LogicalIndex}] {Name}")]
@@ -62,7 +64,7 @@ namespace SharpGLTF.Schema2
 
                 System.Diagnostics.Debug.Assert(matrices.Count == _joints.Count, "IBM and Joints count mismatch");
 
-                return matrices.AsMatrix4x4ReadOnlyList();
+                return matrices.AsMatrix4x4Array();
             }
         }
 
@@ -125,11 +127,11 @@ namespace SharpGLTF.Schema2
 
             var node = this.LogicalParent.LogicalNodes[nodeIdx];
 
-            var matrices = GetInverseBindMatricesAccessor();
+            IReadOnlyList<Matrix4x4> matrices = GetInverseBindMatricesAccessor()?.AsMatrix4x4Array();
 
             var matrix = matrices == null
                 ? Matrix4x4.Identity
-                : matrices.AsMatrix4x4Array()[idx];
+                : matrices[idx];
 
             return (node, matrix);
         }
@@ -208,7 +210,7 @@ namespace SharpGLTF.Schema2
 
             var ibmsView = LogicalParent.UseBufferView(data);
 
-            UseInverseBindMatricesAccessor().SetData(ibmsView, 0, joints.Count, DimensionType.MAT4, EncodingType.FLOAT, false);            
+            UseInverseBindMatricesAccessor().SetData(ibmsView, 0, joints.Count, AttributeFormat.Float4x4);            
 
             // joints
 

@@ -46,7 +46,7 @@ namespace SharpGLTF
 
         internal static bool _IsFinite(this float value)
         {
-            #if NETSTANDARD2_1_OR_GREATER
+            #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
             return float.IsFinite(value);
             #else
             return !(float.IsNaN(value) || float.IsInfinity(value));
@@ -203,6 +203,42 @@ namespace SharpGLTF
         {
             if (comparison == StringComparison.Ordinal) return text.Replace(oldText, newText);
             throw new NotImplementedException();
+        }
+
+        internal static int IndexOf(this string text, string value, StringComparison comparison)
+        {
+            switch(comparison)
+            {
+                case StringComparison.OrdinalIgnoreCase:
+                case StringComparison.InvariantCultureIgnoreCase:
+                    text = text.ToUpperInvariant();
+                    value = value.ToUpperInvariant();
+                    break;
+                case StringComparison.CurrentCultureIgnoreCase:
+                    text = text.ToUpper();
+                    value = value.ToUpper();
+                    break;                  
+            }
+
+            return text.IndexOf(value);
+        }
+
+        internal static int IndexOf(this string text, char value, StringComparison comparison)
+        {
+            switch (comparison)
+            {
+                case StringComparison.OrdinalIgnoreCase:
+                case StringComparison.InvariantCultureIgnoreCase:
+                    text = text.ToUpperInvariant();
+                    value = char.ToUpperInvariant(value);
+                    break;
+                case StringComparison.CurrentCultureIgnoreCase:
+                    text = text.ToUpper();
+                    value = char.ToUpper(value);
+                    break;
+            }
+
+            return text.IndexOf(value);
         }
         #endif
 
@@ -571,7 +607,7 @@ namespace SharpGLTF
                 case IndexEncodingType.UNSIGNED_SHORT: return EncodingType.UNSIGNED_SHORT;
                 case IndexEncodingType.UNSIGNED_INT: return EncodingType.UNSIGNED_INT;
 
-                default: throw new NotImplementedException();
+                default: throw new NotSupportedException();
             }
         }
 
@@ -583,7 +619,7 @@ namespace SharpGLTF
                 case EncodingType.UNSIGNED_SHORT: return IndexEncodingType.UNSIGNED_SHORT;
                 case EncodingType.UNSIGNED_INT: return IndexEncodingType.UNSIGNED_INT;
 
-                default: throw new NotImplementedException();
+                default: throw new NotSupportedException();
             }
         }
 
@@ -602,9 +638,9 @@ namespace SharpGLTF
             }
         }
 
-        internal static DimensionType ToDimension(this int l)
+        public static DimensionType ToDimension(this int len)
         {
-            switch (l)
+            switch (len)
             {
                 case 1: return DimensionType.SCALAR;
                 case 2: return DimensionType.VEC2;
@@ -615,6 +651,27 @@ namespace SharpGLTF
                 case 16: return DimensionType.MAT4;
                 default: throw new NotImplementedException();
             }
+        }
+
+        public static DimensionType ToDimension(this Type t)
+        {
+            if (t == typeof(SByte)) return DimensionType.SCALAR;
+            if (t == typeof(Byte)) return DimensionType.SCALAR;
+            if (t == typeof(Int16)) return DimensionType.SCALAR;
+            if (t == typeof(UInt16)) return DimensionType.SCALAR;
+            if (t == typeof(Int32)) return DimensionType.SCALAR;
+            if (t == typeof(UInt32)) return DimensionType.SCALAR;
+            if (t == typeof(Single)) return DimensionType.SCALAR;
+            if (t == typeof(Double)) return DimensionType.SCALAR;
+
+            if (t == typeof(Vector2)) return DimensionType.VEC2;
+            if (t == typeof(Vector3)) return DimensionType.VEC3;
+            if (t == typeof(Vector4)) return DimensionType.VEC4;
+            if (t == typeof(Quaternion)) return DimensionType.VEC4;
+            // return ElementType.MAT2;
+            // return DimensionType.MAT3;
+            if (t == typeof(Matrix4x4)) return DimensionType.MAT4;
+            throw new NotImplementedException();
         }
 
         public static int GetPrimitiveVertexSize(this PrimitiveType ptype)
@@ -765,19 +822,19 @@ namespace SharpGLTF
 
         #endregion
 
-        #region serialization
-        
-        public static Byte[] ToUnderlayingArray(this ArraySegment<Byte> segment)
-        {
-            if (segment.Offset == 0 && segment.Count == segment.Array.Length) return segment.Array;
+        #region serialization        
 
-            return segment.ToArray();
+        public static bool TryGetUnderlayingArray<T>(this ArraySegment<T> segment, out T[] array)
+        {
+            array = segment.Array ?? Array.Empty<T>();
+            return segment.Offset == 0 && segment.Count == segment.Array.Length;
         }
 
         public static ArraySegment<Byte> ToArraySegment(this System.IO.MemoryStream m)
         {
-            if (m.TryGetBuffer(out ArraySegment<Byte> data)) return data;
-            return new ArraySegment<byte>(m.ToArray());
+            return m.TryGetBuffer(out ArraySegment<Byte> data)
+                ? data
+                : new ArraySegment<byte>(m.ToArray());
         }
 
         public static Byte[] GetPaddedContent(this Byte[] content)
@@ -845,7 +902,7 @@ namespace SharpGLTF
 #pragma warning restore SYSLIB0013 // Type or member is obsolete
         }
 
-#if NET6_0
+        #if NET6_0
 
         /// <summary>
         /// Creates a new instance of the <see cref="JsonNode"/>.
@@ -857,11 +914,10 @@ namespace SharpGLTF
         /// </remarks>
         /// <param name="node">The node to clone.</param>
         /// <returns>A clone of <paramref name="node"/>.</returns>        
-#if NET6_0_OR_GREATER
+
         [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All, typeof(System.Text.Json.Nodes.JsonValue))]
         [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All, typeof(System.Text.Json.Nodes.JsonArray))]
         [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All, typeof(System.Text.Json.Nodes.JsonObject))]
-#endif
         public static System.Text.Json.Nodes.JsonNode DeepClone(this System.Text.Json.Nodes.JsonNode node)
         {
             // issue tracking both DeepClone and DeepEquals: https://github.com/dotnet/runtime/issues/56592            
@@ -870,14 +926,14 @@ namespace SharpGLTF
 
             System.Text.Json.Nodes.JsonNode clone = null;            
 
-#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+            #pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
             switch(node)
             {
                 case System.Text.Json.Nodes.JsonValue asValue: clone = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.Nodes.JsonValue>(asValue); break;
                 case System.Text.Json.Nodes.JsonArray asArray: clone = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.Nodes.JsonArray>(asArray); break;
                 case System.Text.Json.Nodes.JsonObject asObject: clone = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.Nodes.JsonObject>(asObject); break;
             }            
-#pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+            #pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 
             if (clone == null) throw new NotImplementedException();
 
@@ -886,15 +942,13 @@ namespace SharpGLTF
             return clone;
         }
 
-#endif
+        #endif
 
         public static bool DeepEquals(this System.Text.Json.Nodes.JsonNode x, System.Text.Json.Nodes.JsonNode y, double precission)
         {
-#if !NET6_0
-
+            #if !NET6_0
             return System.Text.Json.Nodes.JsonNode.DeepEquals(x, y);
-
-#else
+            #else
 
             if (x == y) return true;
             if (x == null) return false;
@@ -951,7 +1005,7 @@ namespace SharpGLTF
 
             return false;
 
-#endif
+            #endif
         }
 
         #endregion

@@ -40,13 +40,16 @@ namespace SharpGLTF.Schema2
             RegisterExtension<Material, MaterialUnlit>("KHR_materials_unlit", p => new MaterialUnlit(p));
             RegisterExtension<Material, MaterialSheen>("KHR_materials_sheen", p => new MaterialSheen(p));
             RegisterExtension<Material, MaterialIOR>("KHR_materials_ior", p => new MaterialIOR(p));
+            RegisterExtension<Material, MaterialDispersion>("KHR_materials_dispersion", p => new MaterialDispersion(p));
             RegisterExtension<Material, MaterialSpecular>("KHR_materials_specular", p => new MaterialSpecular(p));
             RegisterExtension<Material, MaterialClearCoat>("KHR_materials_clearcoat", p => new MaterialClearCoat(p));
             RegisterExtension<Material, MaterialTransmission>("KHR_materials_transmission", p => new MaterialTransmission(p));
+            RegisterExtension<Material, MaterialDiffuseTransmission>("KHR_materials_diffuse_transmission", p => new MaterialDiffuseTransmission(p));
             RegisterExtension<Material, MaterialVolume>("KHR_materials_volume", p => new MaterialVolume(p));
             RegisterExtension<Material, MaterialEmissiveStrength>("KHR_materials_emissive_strength", p => new MaterialEmissiveStrength(p));
             RegisterExtension<Material, MaterialPBRSpecularGlossiness>("KHR_materials_pbrSpecularGlossiness", p => new MaterialPBRSpecularGlossiness(p));
             RegisterExtension<Material, MaterialIridescence>("KHR_materials_iridescence", p => new MaterialIridescence(p));
+            RegisterExtension<Material, MaterialAnisotropy>("KHR_materials_anisotropy", p => new MaterialAnisotropy(p));
 
             RegisterExtension<TextureInfo, TextureTransform>("KHR_texture_transform", p => new TextureTransform(p));
 
@@ -55,7 +58,9 @@ namespace SharpGLTF.Schema2
             RegisterExtension<Texture, TextureKTX2>("KHR_texture_basisu", p => new TextureKTX2(p));
 
             RegisterExtension<ModelRoot, XmpPackets>("KHR_xmp_json_ld", p => new XmpPackets(p));
-            RegisterExtension<ExtraProperties, XmpPacketReference>("KHR_xmp_json_ld", p => new XmpPacketReference(p));                        
+            RegisterExtension<ExtraProperties, XmpPacketReference>("KHR_xmp_json_ld", p => new XmpPacketReference(p));
+
+            RegisterExtension<AnimationChannelTarget, AnimationPointer>("KHR_animation_pointer", p => new AnimationPointer(p));
         }
 
         #endregion
@@ -170,8 +175,10 @@ namespace SharpGLTF.Schema2
             return null;
         }
 
+        [System.Diagnostics.DebuggerDisplay("{Name} {ParentType} {ExtType}")]
         internal readonly struct ExtensionEntry
         {
+            #region lifecycle
             public static ExtensionEntry Create
                 <
                 TParent,
@@ -209,10 +216,18 @@ namespace SharpGLTF.Schema2
                 Factory = f;
             }
 
+            #endregion
+
+            #region data
+
             public readonly string Name;
             public readonly Type ParentType;
             public readonly Type ExtType;
             public readonly Func<JsonSerializable, JsonSerializable> Factory;
+
+            #endregion
+
+            #region API
 
             public readonly bool IsMatch(Type parentType, string extensionName)
             {
@@ -223,6 +238,8 @@ namespace SharpGLTF.Schema2
             {
                 return this.ParentType.IsAssignableFrom(parentType) && this.ExtType == extensionType;
             }
+
+            #endregion
         }
 
         #endregion

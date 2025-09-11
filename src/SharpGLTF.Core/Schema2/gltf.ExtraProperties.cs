@@ -6,11 +6,10 @@ using System.Linq;
 using System.Text.Json;
 
 using SharpGLTF.IO;
+using SharpGLTF.Reflection;
 
-using JsonToken = System.Text.Json.JsonTokenType;
-
+using JSONTOKEN = System.Text.Json.JsonTokenType;
 using JSONEXTRAS = System.Text.Json.Nodes.JsonNode;
-
 
 namespace SharpGLTF.Schema2
 {
@@ -27,8 +26,9 @@ namespace SharpGLTF.Schema2
     /// <remarks>
     /// Defines the <see cref="Extras"/> property for every glTF object.
     /// </remarks>
-    public abstract class ExtraProperties : JsonSerializable,
-        IExtraProperties
+    public abstract class ExtraProperties
+        : JsonReflectable
+        , IExtraProperties
     {
         #region data
 
@@ -67,7 +67,87 @@ namespace SharpGLTF.Schema2
 
         #endregion
 
-        #region API
+        #region reflection
+
+        public new const string SCHEMANAME = "ExtraProperties";
+
+        protected override string GetSchemaName() => SCHEMANAME;        
+
+        protected override IEnumerable<string> ReflectFieldsNames()
+        {
+            yield return "extensions";
+            yield return "extras";
+            foreach (var name in base.ReflectFieldsNames()) yield return name;
+
+        }
+        protected override bool TryReflectField(string name, out Reflection.FieldInfo value)
+        {
+            switch (name)
+            {
+                case "extensions": value = Reflection.FieldInfo.From("extensions", _extensions, exts => new _ExtensionsReflection(exts)); return true;
+                case "extras": value = Reflection.FieldInfo.From("extras", _extras, inst => inst); return true;
+                default: return base.TryReflectField(name, out value);
+            }
+        }
+
+        /// <summary>
+        /// Gets a collection of <see cref="ExtraProperties"/> instances stored by this object.
+        /// </summary>
+        /// <returns>A collection of <see cref="ExtraProperties"/> instances.</returns>
+        /// <remarks>
+        /// This is used to traverse the whole glTF document tree and gather all the objects<br/>
+        /// So we can identify which extensions are used anywhere in the document.
+        /// </remarks>
+        protected IEnumerable<ExtraProperties> GetLogicalChildren()
+        {
+            foreach (var ext in _extensions.OfType<ExtraProperties>())
+            {
+                yield return ext;
+            }
+
+            if (!(this is IReflectionObject robj)) yield break;
+
+            foreach (var field in robj.GetFields())
+            {
+                var value = field.Value;
+
+                if (value is IReflectionArray array)
+                {
+                    for (int i = 0; i < array.Count; ++i)
+                    {
+                        var item = array.GetField(i);
+                        if (item.Value is ExtraProperties itemExtra) yield return itemExtra;
+                    }
+                }
+                else if (value is ExtraProperties extra) yield return extra;
+            }
+        }
+
+        protected static IEnumerable<ExtraProperties> Flatten(ExtraProperties container)
+        {
+            if (container == null) yield break;
+
+            yield return container;
+
+            foreach (var c in container.GetLogicalChildren())
+            {
+                var cc = Flatten(c);
+
+                foreach (var ccc in cc) yield return ccc;
+            }
+        }
+
+        #endregion
+
+        #region API        
+
+        protected static void SetProperty<TParent, TProperty, TValue>(TParent parent, ref TProperty property, TValue value)
+            where TParent : ExtraProperties
+            where TProperty: class
+            where TValue: TProperty
+        {
+            new Collections.ChildSetter<TParent>(parent).SetProperty(ref property, value);
+        }
 
         protected static Collections.ChildSetter<T> GetChildSetter<T>(T owner) where T:ExtraProperties
         {
@@ -119,34 +199,7 @@ namespace SharpGLTF.Schema2
             where T : JsonSerializable
         {
             _extensions.RemoveAll(item => item.GetType() == typeof(T));
-        }
-
-        /// <summary>
-        /// Gets a collection of <see cref="ExtraProperties"/> instances stored by this object.
-        /// </summary>
-        /// <returns>A collection of <see cref="ExtraProperties"/> instances.</returns>
-        /// <remarks>
-        /// This is used to traverse the whole glTF document tree and gather all the objects<br/>
-        /// So we can identify which extensions are used anywhere in the document.
-        /// </remarks>
-        protected virtual IEnumerable<ExtraProperties> GetLogicalChildren()
-        {
-            return _extensions.OfType<ExtraProperties>();
-        }
-
-        protected static IEnumerable<ExtraProperties> Flatten(ExtraProperties container)
-        {
-            if (container == null) yield break;
-
-            yield return container;
-
-            foreach (var c in container.GetLogicalChildren())
-            {
-                var cc = Flatten(c);
-
-                foreach (var ccc in cc) yield return ccc;
-            }
-        }
+        }        
 
         #endregion
 
@@ -252,9 +305,9 @@ namespace SharpGLTF.Schema2
         {
             reader.Read();
 
-            if (reader.TokenType == JsonToken.StartObject)
+            if (reader.TokenType == JSONTOKEN.StartObject)
             {
-                while (reader.Read() && reader.TokenType != JsonToken.EndObject)
+                while (reader.Read() && reader.TokenType != JSONTOKEN.EndObject)
                 {
                     var key = reader.GetString();
 
@@ -269,6 +322,43 @@ namespace SharpGLTF.Schema2
             }
 
             reader.Skip();
+        }
+
+        #endregion
+
+        #region nested types
+
+        private readonly struct _ExtensionsReflection : Reflection.IReflectionObject
+        {
+            public _ExtensionsReflection(IReadOnlyList<JsonSerializable> extensions)
+            {
+                _Extensions = extensions;
+            }
+
+            private readonly IReadOnlyList<JsonSerializable> _Extensions;
+
+            public bool TryGetField(string name, out FieldInfo value)
+            {
+                var extension = _Extensions.FirstOrDefault(item => item._SchemaName == name);
+                if (extension == null)
+                {
+                    value = default;
+                    return false;
+                }
+
+                value = Reflection.FieldInfo.From(extension._SchemaName, extension, ext => ext);
+                return true;
+            }
+
+            public IEnumerable<FieldInfo> GetFields()
+            {
+                foreach(var extension in _Extensions)
+                {
+                    yield return Reflection.FieldInfo.From(extension._SchemaName, extension, ext => ext);
+                }
+            }
+
+            
         }
 
         #endregion

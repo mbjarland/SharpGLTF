@@ -23,6 +23,11 @@ using System.Text;
 using System.Numerics;
 using System.Text.Json;
 
+using JSONREADER = System.Text.Json.Utf8JsonReader;
+using JSONWRITER = System.Text.Json.Utf8JsonWriter;
+using FIELDINFO = SharpGLTF.Reflection.FieldInfo;
+
+
 namespace SharpGLTF.Schema2
 {
 	using Collections;
@@ -36,6 +41,37 @@ namespace SharpGLTF.Schema2
 	[global::System.CodeDom.Compiler.GeneratedCodeAttribute("SharpGLTF.CodeGen", "1.0.0.0")]
 	partial class MaterialClearCoat : ExtraProperties
 	{
+	
+		#region reflection
+	
+		public new const string SCHEMANAME = "KHR_materials_clearcoat";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "clearcoatFactor";
+			yield return "clearcoatNormalTexture";
+			yield return "clearcoatRoughnessFactor";
+			yield return "clearcoatRoughnessTexture";
+			yield return "clearcoatTexture";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "clearcoatFactor": value = FIELDINFO.From("clearcoatFactor",this, instance => instance._clearcoatFactor ?? 0); return true;
+				case "clearcoatNormalTexture": value = FIELDINFO.From("clearcoatNormalTexture",this, instance => instance._clearcoatNormalTexture); return true;
+				case "clearcoatRoughnessFactor": value = FIELDINFO.From("clearcoatRoughnessFactor",this, instance => instance._clearcoatRoughnessFactor ?? 0); return true;
+				case "clearcoatRoughnessTexture": value = FIELDINFO.From("clearcoatRoughnessTexture",this, instance => instance._clearcoatRoughnessTexture); return true;
+				case "clearcoatTexture": value = FIELDINFO.From("clearcoatTexture",this, instance => instance._clearcoatTexture); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
 	
 		private const Double _clearcoatFactorDefault = 0;
 		private const Double _clearcoatFactorMinimum = 0;
@@ -53,8 +89,11 @@ namespace SharpGLTF.Schema2
 		
 		private TextureInfo _clearcoatTexture;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "clearcoatFactor", _clearcoatFactor, _clearcoatFactorDefault);
@@ -64,18 +103,20 @@ namespace SharpGLTF.Schema2
 			SerializePropertyObject(writer, "clearcoatTexture", _clearcoatTexture);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "clearcoatFactor": _clearcoatFactor = DeserializePropertyValue<Double?>(ref reader); break;
-				case "clearcoatNormalTexture": _clearcoatNormalTexture = DeserializePropertyValue<MaterialNormalTextureInfo>(ref reader); break;
-				case "clearcoatRoughnessFactor": _clearcoatRoughnessFactor = DeserializePropertyValue<Double?>(ref reader); break;
-				case "clearcoatRoughnessTexture": _clearcoatRoughnessTexture = DeserializePropertyValue<TextureInfo>(ref reader); break;
-				case "clearcoatTexture": _clearcoatTexture = DeserializePropertyValue<TextureInfo>(ref reader); break;
+				case "clearcoatFactor": DeserializePropertyValue<MaterialClearCoat, Double?>(ref reader, this, out _clearcoatFactor); break;
+				case "clearcoatNormalTexture": DeserializePropertyValue<MaterialClearCoat, MaterialNormalTextureInfo>(ref reader, this, out _clearcoatNormalTexture); break;
+				case "clearcoatRoughnessFactor": DeserializePropertyValue<MaterialClearCoat, Double?>(ref reader, this, out _clearcoatRoughnessFactor); break;
+				case "clearcoatRoughnessTexture": DeserializePropertyValue<MaterialClearCoat, TextureInfo>(ref reader, this, out _clearcoatRoughnessTexture); break;
+				case "clearcoatTexture": DeserializePropertyValue<MaterialClearCoat, TextureInfo>(ref reader, this, out _clearcoatTexture); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 

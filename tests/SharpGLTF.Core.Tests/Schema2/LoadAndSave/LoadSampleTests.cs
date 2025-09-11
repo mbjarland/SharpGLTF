@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 
 using NUnit.Framework;
@@ -39,14 +40,17 @@ namespace SharpGLTF.Schema2.LoadAndSave
 
             try
             {
-                model = ModelRoot.Load(f, settings);
-                Assert.That(model, Is.Not.Null);
+                model = ModelRoot.Load(f, settings);                
             }
             catch (Exception ex)
             {
                 TestContext.Progress.WriteLine($"Failed {f.ToShortDisplayPath()}");
                 Assert.Fail(ex.Message);
             }
+
+            Assert.That(model, Is.Not.Null);
+
+            if (model == null) return null;
 
             var perf_load = perf.ElapsedMilliseconds;
 
@@ -106,17 +110,23 @@ namespace SharpGLTF.Schema2.LoadAndSave
         {            
             TestContext.CurrentContext.AttachGltfValidatorLinks();
 
-            Assert.Multiple( () =>
-            {
+            #if !DEBUG
+            Assert.Multiple( () => {
+            #endif
+
                 foreach (var f in TestFiles.GetSampleModelsPaths())
                 {
-                    if (f.Contains("SuzanneMorphSparse")) continue; // temporarily skipping due to empty BufferView issue
+                    if (f.Contains("SuzanneMorphSparse")) continue; // temporarily skipping due to empty BufferView issue                    
+                    if (f.Contains("SunglassesKhronos")) continue; // KHR_materials_specular is declared but not used
 
-                    if (!f.Contains(section)) continue;
+                if (!f.Contains(section)) continue;
 
                     _LoadModel(f);
                 }
+
+            #if !DEBUG
             } );
+            #endif
         }
 
         [Test]
@@ -170,6 +180,7 @@ namespace SharpGLTF.Schema2.LoadAndSave
             roundtripInstanced.AttachToCurrentTest($"{ff}.roundtrip.instancing.glb");            
         }
 
+        [TestCase("AnimationPointerUVs.gltf")]
         [TestCase("IridescenceMetallicSpheres.gltf")]
         [TestCase("SpecGlossVsMetalRough.gltf")]
         [TestCase(@"TextureTransformTest.gltf")]
@@ -241,9 +252,11 @@ namespace SharpGLTF.Schema2.LoadAndSave
 
             var accessor = primitive.GetVertexAccessor("POSITION");
 
-            var basePositions = accessor._GetMemoryAccessor().AsVector3Array();
+            if (!accessor._TryGetMemoryAccessor(out var baseMem)) Assert.Fail("can't get underlaying data");
 
-            var positions = accessor.AsVector3Array();
+            var basePositions = baseMem.AsArrayOf<Vector3>();
+
+            var positions = accessor.AsArrayOf<Vector3>();
         }
 
         [Test]
@@ -264,12 +277,13 @@ namespace SharpGLTF.Schema2.LoadAndSave
             model.AttachToCurrentTest(System.IO.Path.ChangeExtension(System.IO.Path.GetFileName(path), ".glb"));
         }
 
+        [TestCase("AnimationPointerUVs.glb")]
+        [TestCase("RiggedFigure.glb")]
         [TestCase("RiggedFigure.glb")]
         [TestCase("RiggedSimple.glb")]
         [TestCase("BoxAnimated.glb")]
         [TestCase("AnimatedMorphCube.glb")]        
-        [TestCase("CesiumMan.glb")]
-        //[TestCase("Monster.glb")] // temporarily removed from khronos repo
+        [TestCase("CesiumMan.glb")]        
         [TestCase("BrainStem.glb")]
         [TestCase("Fox.glb")]
         public void LoadModelsWithAnimations(string path)
@@ -297,7 +311,7 @@ namespace SharpGLTF.Schema2.LoadAndSave
                 var t = duration * i / 10;
                 int tt = (int)(t * 1000.0f);
 
-                model.AttachToCurrentTest($"{path} at {tt}.obj",anim, t);
+                model.AttachToCurrentTest($"{path} at {tt}.obj", anim, t);
             }            
         }
 
@@ -336,7 +350,7 @@ namespace SharpGLTF.Schema2.LoadAndSave
 
                 var nodexform = instance.GetDrawableInstance(0).Transform;
 
-                TestContext.WriteLine($"Animation at {t}");
+                TestContext.Out.WriteLine($"Animation at {t}");
 
                 var curves = node.GetCurveSamplers(anim);
 
@@ -346,14 +360,14 @@ namespace SharpGLTF.Schema2.LoadAndSave
                         .CreateCurveSampler()
                         .GetPoint(t);            
                     
-                    TestContext.WriteLine($"    Morph Weights: {mw[0]} {mw[1]}");
+                    TestContext.Out.WriteLine($"    Morph Weights: {mw[0]} {mw[1]}");
                 }
 
                 var msw = curves.GetMorphingSampler<Transforms.SparseWeight8>()
                     .CreateCurveSampler()
                     .GetPoint(t);
 
-                TestContext.WriteLine($"    Morph Sparse : {msw.Weight0} {msw.Weight1}");
+                TestContext.Out.WriteLine($"    Morph Sparse : {msw.Weight0} {msw.Weight1}");
 
                 var triangles = model.DefaultScene
                     .EvaluateTriangles<Geometry.VertexTypes.VertexPosition, Geometry.VertexTypes.VertexEmpty>(null, anim, t)
@@ -364,9 +378,9 @@ namespace SharpGLTF.Schema2.LoadAndSave
                     .Distinct()
                     .ToList();
 
-                foreach (var v in vertices) TestContext.WriteLine($"{v}");
+                foreach (var v in vertices) TestContext.Out.WriteLine($"{v}");
 
-                TestContext.WriteLine();
+                TestContext.Out.WriteLine();
             }
 
 
@@ -398,16 +412,16 @@ namespace SharpGLTF.Schema2.LoadAndSave
 
             foreach (var f in TestFiles.GetBabylonJSModelsPaths())
             {
-                TestContext.WriteLine(f);
+                TestContext.Out.WriteLine(f);
 
                 var dependencies = ModelRoot.GetSatellitePaths(f);
 
                 foreach(var d in dependencies)
                 {
-                    TestContext.WriteLine($"    {d}");
+                    TestContext.Out.WriteLine($"    {d}");
                 }
 
-                TestContext.WriteLine();
+                TestContext.Out.WriteLine();
             }
         }
     }

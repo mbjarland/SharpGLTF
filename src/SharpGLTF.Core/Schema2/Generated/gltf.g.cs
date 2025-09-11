@@ -23,6 +23,11 @@ using System.Text;
 using System.Numerics;
 using System.Text.Json;
 
+using JSONREADER = System.Text.Json.Utf8JsonReader;
+using JSONWRITER = System.Text.Json.Utf8JsonWriter;
+using FIELDINFO = SharpGLTF.Reflection.FieldInfo;
+
+
 namespace SharpGLTF.Schema2
 {
 	using Collections;
@@ -77,6 +82,7 @@ namespace SharpGLTF.Schema2
 		rotation,
 		scale,
 		weights,
+		pointer,
 	}
 
 
@@ -181,23 +187,51 @@ namespace SharpGLTF.Schema2
 	partial class LogicalChildOfRoot : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "glTFChildOfRootProperty";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "name";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "name": value = FIELDINFO.From("name",this, instance => instance._name); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private String _name;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "name", _name);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "name": _name = DeserializePropertyValue<String>(ref reader); break;
+				case "name": DeserializePropertyValue<LogicalChildOfRoot, String>(ref reader, this, out _name); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -211,6 +245,33 @@ namespace SharpGLTF.Schema2
 	partial class AccessorSparseIndices : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "indices";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "bufferView";
+			yield return "byteOffset";
+			yield return "componentType";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "bufferView": value = FIELDINFO.From("bufferView",this, instance => instance._bufferView); return true;
+				case "byteOffset": value = FIELDINFO.From("byteOffset",this, instance => instance._byteOffset ?? 0); return true;
+				case "componentType": value = FIELDINFO.From("componentType",this, instance => instance._componentType); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Int32 _bufferView;
 		
 		private const Int32 _byteOffsetDefault = 0;
@@ -219,8 +280,11 @@ namespace SharpGLTF.Schema2
 		
 		private IndexEncodingType _componentType;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "bufferView", _bufferView);
@@ -228,16 +292,18 @@ namespace SharpGLTF.Schema2
 			SerializePropertyEnumValue<IndexEncodingType>(writer, "componentType", _componentType);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "bufferView": _bufferView = DeserializePropertyValue<Int32>(ref reader); break;
-				case "byteOffset": _byteOffset = DeserializePropertyValue<Int32?>(ref reader); break;
+				case "bufferView": DeserializePropertyValue<AccessorSparseIndices, Int32>(ref reader, this, out _bufferView); break;
+				case "byteOffset": DeserializePropertyValue<AccessorSparseIndices, Int32?>(ref reader, this, out _byteOffset); break;
 				case "componentType": _componentType = DeserializePropertyValue<IndexEncodingType>(ref reader); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -251,29 +317,59 @@ namespace SharpGLTF.Schema2
 	partial class AccessorSparseValues : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "values";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "bufferView";
+			yield return "byteOffset";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "bufferView": value = FIELDINFO.From("bufferView",this, instance => instance._bufferView); return true;
+				case "byteOffset": value = FIELDINFO.From("byteOffset",this, instance => instance._byteOffset ?? 0); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Int32 _bufferView;
 		
 		private const Int32 _byteOffsetDefault = 0;
 		private const Int32 _byteOffsetMinimum = 0;
 		private Int32? _byteOffset = _byteOffsetDefault;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "bufferView", _bufferView);
 			SerializeProperty(writer, "byteOffset", _byteOffset, _byteOffsetDefault);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "bufferView": _bufferView = DeserializePropertyValue<Int32>(ref reader); break;
-				case "byteOffset": _byteOffset = DeserializePropertyValue<Int32?>(ref reader); break;
+				case "bufferView": DeserializePropertyValue<AccessorSparseValues, Int32>(ref reader, this, out _bufferView); break;
+				case "byteOffset": DeserializePropertyValue<AccessorSparseValues, Int32?>(ref reader, this, out _byteOffset); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -287,6 +383,33 @@ namespace SharpGLTF.Schema2
 	partial class AccessorSparse : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "sparse";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "count";
+			yield return "indices";
+			yield return "values";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "count": value = FIELDINFO.From("count",this, instance => instance._count); return true;
+				case "indices": value = FIELDINFO.From("indices",this, instance => instance._indices); return true;
+				case "values": value = FIELDINFO.From("values",this, instance => instance._values); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private const Int32 _countMinimum = 1;
 		private Int32 _count;
 		
@@ -294,8 +417,11 @@ namespace SharpGLTF.Schema2
 		
 		private AccessorSparseValues _values;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "count", _count);
@@ -303,16 +429,18 @@ namespace SharpGLTF.Schema2
 			SerializePropertyObject(writer, "values", _values);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "count": _count = DeserializePropertyValue<Int32>(ref reader); break;
-				case "indices": _indices = DeserializePropertyValue<AccessorSparseIndices>(ref reader); break;
-				case "values": _values = DeserializePropertyValue<AccessorSparseValues>(ref reader); break;
+				case "count": DeserializePropertyValue<AccessorSparse, Int32>(ref reader, this, out _count); break;
+				case "indices": DeserializePropertyValue<AccessorSparse, AccessorSparseIndices>(ref reader, this, out _indices); break;
+				case "values": DeserializePropertyValue<AccessorSparse, AccessorSparseValues>(ref reader, this, out _values); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -325,6 +453,45 @@ namespace SharpGLTF.Schema2
 	[global::System.CodeDom.Compiler.GeneratedCodeAttribute("SharpGLTF.CodeGen", "1.0.0.0")]
 	partial class Accessor : LogicalChildOfRoot
 	{
+	
+		#region reflection
+	
+		public new const string SCHEMANAME = "accessor";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "bufferView";
+			yield return "byteOffset";
+			yield return "componentType";
+			yield return "count";
+			yield return "max";
+			yield return "min";
+			yield return "normalized";
+			yield return "sparse";
+			yield return "type";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "bufferView": value = FIELDINFO.From("bufferView",this, instance => instance._bufferView); return true;
+				case "byteOffset": value = FIELDINFO.From("byteOffset",this, instance => instance._byteOffset ?? 0); return true;
+				case "componentType": value = FIELDINFO.From("componentType",this, instance => instance._componentType); return true;
+				case "count": value = FIELDINFO.From("count",this, instance => instance._count); return true;
+				case "max": value = FIELDINFO.From("max",this, instance => instance._max); return true;
+				case "min": value = FIELDINFO.From("min",this, instance => instance._min); return true;
+				case "normalized": value = FIELDINFO.From("normalized",this, instance => instance._normalized ?? false); return true;
+				case "sparse": value = FIELDINFO.From("sparse",this, instance => instance._sparse); return true;
+				case "type": value = FIELDINFO.From("type",this, instance => instance._type); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
 	
 		private Int32? _bufferView;
 		
@@ -352,8 +519,11 @@ namespace SharpGLTF.Schema2
 		
 		private String _type;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "bufferView", _bufferView);
@@ -367,22 +537,24 @@ namespace SharpGLTF.Schema2
 			SerializeProperty(writer, "type", _type);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "bufferView": _bufferView = DeserializePropertyValue<Int32?>(ref reader); break;
-				case "byteOffset": _byteOffset = DeserializePropertyValue<Int32?>(ref reader); break;
+				case "bufferView": DeserializePropertyValue<Accessor, Int32?>(ref reader, this, out _bufferView); break;
+				case "byteOffset": DeserializePropertyValue<Accessor, Int32?>(ref reader, this, out _byteOffset); break;
 				case "componentType": _componentType = DeserializePropertyValue<EncodingType>(ref reader); break;
-				case "count": _count = DeserializePropertyValue<Int32>(ref reader); break;
-				case "max": DeserializePropertyList<Double>(ref reader, _max); break;
-				case "min": DeserializePropertyList<Double>(ref reader, _min); break;
-				case "normalized": _normalized = DeserializePropertyValue<Boolean?>(ref reader); break;
-				case "sparse": _sparse = DeserializePropertyValue<AccessorSparse>(ref reader); break;
-				case "type": _type = DeserializePropertyValue<String>(ref reader); break;
+				case "count": DeserializePropertyValue<Accessor, Int32>(ref reader, this, out _count); break;
+				case "max": DeserializePropertyList<Accessor, Double>(ref reader, this, _max); break;
+				case "min": DeserializePropertyList<Accessor, Double>(ref reader, this, _min); break;
+				case "normalized": DeserializePropertyValue<Accessor, Boolean?>(ref reader, this, out _normalized); break;
+				case "sparse": DeserializePropertyValue<Accessor, AccessorSparse>(ref reader, this, out _sparse); break;
+				case "type": DeserializePropertyValue<Accessor, String>(ref reader, this, out _type); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -396,27 +568,57 @@ namespace SharpGLTF.Schema2
 	partial class AnimationChannelTarget : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "target";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "node";
+			yield return "path";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "node": value = FIELDINFO.From("node",this, instance => instance._node); return true;
+				case "path": value = FIELDINFO.From("path",this, instance => instance._path); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Int32? _node;
 		
 		private PropertyPath _path;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "node", _node);
 			SerializePropertyEnumSymbol<PropertyPath>(writer, "path", _path);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "node": _node = DeserializePropertyValue<Int32?>(ref reader); break;
+				case "node": DeserializePropertyValue<AnimationChannelTarget, Int32?>(ref reader, this, out _node); break;
 				case "path": _path = DeserializePropertyValue<PropertyPath>(ref reader); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -430,27 +632,57 @@ namespace SharpGLTF.Schema2
 	partial class AnimationChannel : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "channel";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "sampler";
+			yield return "target";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "sampler": value = FIELDINFO.From("sampler",this, instance => instance._sampler); return true;
+				case "target": value = FIELDINFO.From("target",this, instance => instance._target); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Int32 _sampler;
 		
 		private AnimationChannelTarget _target;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "sampler", _sampler);
 			SerializePropertyObject(writer, "target", _target);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "sampler": _sampler = DeserializePropertyValue<Int32>(ref reader); break;
-				case "target": _target = DeserializePropertyValue<AnimationChannelTarget>(ref reader); break;
+				case "sampler": DeserializePropertyValue<AnimationChannel, Int32>(ref reader, this, out _sampler); break;
+				case "target": DeserializePropertyValue<AnimationChannel, AnimationChannelTarget>(ref reader, this, out _target); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -464,6 +696,33 @@ namespace SharpGLTF.Schema2
 	partial class AnimationSampler : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "sampler";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "input";
+			yield return "interpolation";
+			yield return "output";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "input": value = FIELDINFO.From("input",this, instance => instance._input); return true;
+				case "interpolation": value = FIELDINFO.From("interpolation",this, instance => instance._interpolation ?? AnimationInterpolationMode.LINEAR); return true;
+				case "output": value = FIELDINFO.From("output",this, instance => instance._output); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Int32 _input;
 		
 		private const AnimationInterpolationMode _interpolationDefault = AnimationInterpolationMode.LINEAR;
@@ -471,8 +730,11 @@ namespace SharpGLTF.Schema2
 		
 		private Int32 _output;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "input", _input);
@@ -480,16 +742,18 @@ namespace SharpGLTF.Schema2
 			SerializeProperty(writer, "output", _output);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "input": _input = DeserializePropertyValue<Int32>(ref reader); break;
+				case "input": DeserializePropertyValue<AnimationSampler, Int32>(ref reader, this, out _input); break;
 				case "interpolation": _interpolation = DeserializePropertyValue<AnimationInterpolationMode>(ref reader); break;
-				case "output": _output = DeserializePropertyValue<Int32>(ref reader); break;
+				case "output": DeserializePropertyValue<AnimationSampler, Int32>(ref reader, this, out _output); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -503,29 +767,59 @@ namespace SharpGLTF.Schema2
 	partial class Animation : LogicalChildOfRoot
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "animation";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "channels";
+			yield return "samplers";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "channels": value = FIELDINFO.From("channels",this, instance => instance._channels); return true;
+				case "samplers": value = FIELDINFO.From("samplers",this, instance => instance._samplers); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private const int _channelsMinItems = 1;
 		private ChildrenList<AnimationChannel,Animation> _channels;
 		
 		private const int _samplersMinItems = 1;
 		private ChildrenList<AnimationSampler,Animation> _samplers;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "channels", _channels, _channelsMinItems);
 			SerializeProperty(writer, "samplers", _samplers, _samplersMinItems);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "channels": DeserializePropertyList<AnimationChannel>(ref reader, _channels); break;
-				case "samplers": DeserializePropertyList<AnimationSampler>(ref reader, _samplers); break;
+				case "channels": DeserializePropertyList<Animation, AnimationChannel>(ref reader, this, _channels); break;
+				case "samplers": DeserializePropertyList<Animation, AnimationSampler>(ref reader, this, _samplers); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -539,6 +833,35 @@ namespace SharpGLTF.Schema2
 	partial class Asset : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "asset";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "copyright";
+			yield return "generator";
+			yield return "minVersion";
+			yield return "version";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "copyright": value = FIELDINFO.From("copyright",this, instance => instance._copyright); return true;
+				case "generator": value = FIELDINFO.From("generator",this, instance => instance._generator); return true;
+				case "minVersion": value = FIELDINFO.From("minVersion",this, instance => instance._minVersion); return true;
+				case "version": value = FIELDINFO.From("version",this, instance => instance._version); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private String _copyright;
 		
 		private String _generator;
@@ -547,8 +870,11 @@ namespace SharpGLTF.Schema2
 		
 		private String _version;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "copyright", _copyright);
@@ -557,17 +883,19 @@ namespace SharpGLTF.Schema2
 			SerializeProperty(writer, "version", _version);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "copyright": _copyright = DeserializePropertyValue<String>(ref reader); break;
-				case "generator": _generator = DeserializePropertyValue<String>(ref reader); break;
-				case "minVersion": _minVersion = DeserializePropertyValue<String>(ref reader); break;
-				case "version": _version = DeserializePropertyValue<String>(ref reader); break;
+				case "copyright": DeserializePropertyValue<Asset, String>(ref reader, this, out _copyright); break;
+				case "generator": DeserializePropertyValue<Asset, String>(ref reader, this, out _generator); break;
+				case "minVersion": DeserializePropertyValue<Asset, String>(ref reader, this, out _minVersion); break;
+				case "version": DeserializePropertyValue<Asset, String>(ref reader, this, out _version); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -581,28 +909,58 @@ namespace SharpGLTF.Schema2
 	partial class Buffer : LogicalChildOfRoot
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "buffer";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "byteLength";
+			yield return "uri";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "byteLength": value = FIELDINFO.From("byteLength",this, instance => instance._byteLength); return true;
+				case "uri": value = FIELDINFO.From("uri",this, instance => instance._uri); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private const Int32 _byteLengthMinimum = 1;
 		private Int32 _byteLength;
 		
 		private String _uri;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "byteLength", _byteLength);
 			SerializeProperty(writer, "uri", _uri);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "byteLength": _byteLength = DeserializePropertyValue<Int32>(ref reader); break;
-				case "uri": _uri = DeserializePropertyValue<String>(ref reader); break;
+				case "byteLength": DeserializePropertyValue<Buffer, Int32>(ref reader, this, out _byteLength); break;
+				case "uri": DeserializePropertyValue<Buffer, String>(ref reader, this, out _uri); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -615,6 +973,37 @@ namespace SharpGLTF.Schema2
 	[global::System.CodeDom.Compiler.GeneratedCodeAttribute("SharpGLTF.CodeGen", "1.0.0.0")]
 	partial class BufferView : LogicalChildOfRoot
 	{
+	
+		#region reflection
+	
+		public new const string SCHEMANAME = "bufferView";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "buffer";
+			yield return "byteLength";
+			yield return "byteOffset";
+			yield return "byteStride";
+			yield return "target";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "buffer": value = FIELDINFO.From("buffer",this, instance => instance._buffer); return true;
+				case "byteLength": value = FIELDINFO.From("byteLength",this, instance => instance._byteLength); return true;
+				case "byteOffset": value = FIELDINFO.From("byteOffset",this, instance => instance._byteOffset ?? 0); return true;
+				case "byteStride": value = FIELDINFO.From("byteStride",this, instance => instance._byteStride); return true;
+				case "target": value = FIELDINFO.From("target",this, instance => instance._target); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
 	
 		private Int32 _buffer;
 		
@@ -631,8 +1020,11 @@ namespace SharpGLTF.Schema2
 		
 		private BufferMode? _target;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "buffer", _buffer);
@@ -642,18 +1034,20 @@ namespace SharpGLTF.Schema2
 			SerializePropertyEnumValue<BufferMode>(writer, "target", _target);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "buffer": _buffer = DeserializePropertyValue<Int32>(ref reader); break;
-				case "byteLength": _byteLength = DeserializePropertyValue<Int32>(ref reader); break;
-				case "byteOffset": _byteOffset = DeserializePropertyValue<Int32?>(ref reader); break;
-				case "byteStride": _byteStride = DeserializePropertyValue<Int32?>(ref reader); break;
+				case "buffer": DeserializePropertyValue<BufferView, Int32>(ref reader, this, out _buffer); break;
+				case "byteLength": DeserializePropertyValue<BufferView, Int32>(ref reader, this, out _byteLength); break;
+				case "byteOffset": DeserializePropertyValue<BufferView, Int32?>(ref reader, this, out _byteOffset); break;
+				case "byteStride": DeserializePropertyValue<BufferView, Int32?>(ref reader, this, out _byteStride); break;
 				case "target": _target = DeserializePropertyValue<BufferMode>(ref reader); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -667,6 +1061,35 @@ namespace SharpGLTF.Schema2
 	partial class CameraOrthographic : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "orthographic";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "xmag";
+			yield return "ymag";
+			yield return "zfar";
+			yield return "znear";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "xmag": value = FIELDINFO.From("xmag",this, instance => instance._xmag); return true;
+				case "ymag": value = FIELDINFO.From("ymag",this, instance => instance._ymag); return true;
+				case "zfar": value = FIELDINFO.From("zfar",this, instance => instance._zfar); return true;
+				case "znear": value = FIELDINFO.From("znear",this, instance => instance._znear); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Double _xmag;
 		
 		private Double _ymag;
@@ -677,8 +1100,11 @@ namespace SharpGLTF.Schema2
 		private const Double _znearMinimum = 0;
 		private Double _znear;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "xmag", _xmag);
@@ -687,17 +1113,19 @@ namespace SharpGLTF.Schema2
 			SerializeProperty(writer, "znear", _znear);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "xmag": _xmag = DeserializePropertyValue<Double>(ref reader); break;
-				case "ymag": _ymag = DeserializePropertyValue<Double>(ref reader); break;
-				case "zfar": _zfar = DeserializePropertyValue<Double>(ref reader); break;
-				case "znear": _znear = DeserializePropertyValue<Double>(ref reader); break;
+				case "xmag": DeserializePropertyValue<CameraOrthographic, Double>(ref reader, this, out _xmag); break;
+				case "ymag": DeserializePropertyValue<CameraOrthographic, Double>(ref reader, this, out _ymag); break;
+				case "zfar": DeserializePropertyValue<CameraOrthographic, Double>(ref reader, this, out _zfar); break;
+				case "znear": DeserializePropertyValue<CameraOrthographic, Double>(ref reader, this, out _znear); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -711,6 +1139,35 @@ namespace SharpGLTF.Schema2
 	partial class CameraPerspective : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "perspective";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "aspectRatio";
+			yield return "yfov";
+			yield return "zfar";
+			yield return "znear";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "aspectRatio": value = FIELDINFO.From("aspectRatio",this, instance => instance._aspectRatio); return true;
+				case "yfov": value = FIELDINFO.From("yfov",this, instance => instance._yfov); return true;
+				case "zfar": value = FIELDINFO.From("zfar",this, instance => instance._zfar); return true;
+				case "znear": value = FIELDINFO.From("znear",this, instance => instance._znear); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private const Double _aspectRatioExclusiveMinimum = 0;
 		private Double? _aspectRatio;
 		
@@ -723,8 +1180,11 @@ namespace SharpGLTF.Schema2
 		private const Double _znearExclusiveMinimum = 0;
 		private Double _znear;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "aspectRatio", _aspectRatio);
@@ -733,17 +1193,19 @@ namespace SharpGLTF.Schema2
 			SerializeProperty(writer, "znear", _znear);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "aspectRatio": _aspectRatio = DeserializePropertyValue<Double?>(ref reader); break;
-				case "yfov": _yfov = DeserializePropertyValue<Double>(ref reader); break;
-				case "zfar": _zfar = DeserializePropertyValue<Double?>(ref reader); break;
-				case "znear": _znear = DeserializePropertyValue<Double>(ref reader); break;
+				case "aspectRatio": DeserializePropertyValue<CameraPerspective, Double?>(ref reader, this, out _aspectRatio); break;
+				case "yfov": DeserializePropertyValue<CameraPerspective, Double>(ref reader, this, out _yfov); break;
+				case "zfar": DeserializePropertyValue<CameraPerspective, Double?>(ref reader, this, out _zfar); break;
+				case "znear": DeserializePropertyValue<CameraPerspective, Double>(ref reader, this, out _znear); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -758,14 +1220,44 @@ namespace SharpGLTF.Schema2
 	partial class Camera : LogicalChildOfRoot
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "camera";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "orthographic";
+			yield return "perspective";
+			yield return "type";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "orthographic": value = FIELDINFO.From("orthographic",this, instance => instance._orthographic); return true;
+				case "perspective": value = FIELDINFO.From("perspective",this, instance => instance._perspective); return true;
+				case "type": value = FIELDINFO.From("type",this, instance => instance._type); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private CameraOrthographic _orthographic;
 		
 		private CameraPerspective _perspective;
 		
 		private CameraType _type;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializePropertyObject(writer, "orthographic", _orthographic);
@@ -773,16 +1265,18 @@ namespace SharpGLTF.Schema2
 			SerializePropertyEnumSymbol<CameraType>(writer, "type", _type);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "orthographic": _orthographic = DeserializePropertyValue<CameraOrthographic>(ref reader); break;
-				case "perspective": _perspective = DeserializePropertyValue<CameraPerspective>(ref reader); break;
+				case "orthographic": DeserializePropertyValue<Camera, CameraOrthographic>(ref reader, this, out _orthographic); break;
+				case "perspective": DeserializePropertyValue<Camera, CameraPerspective>(ref reader, this, out _perspective); break;
 				case "type": _type = DeserializePropertyValue<CameraType>(ref reader); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -796,29 +1290,59 @@ namespace SharpGLTF.Schema2
 	partial class TextureInfo : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "textureInfo";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "index";
+			yield return "texCoord";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "index": value = FIELDINFO.From("index",this, instance => instance._index); return true;
+				case "texCoord": value = FIELDINFO.From("texCoord",this, instance => instance._texCoord ?? 0); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Int32 _index;
 		
 		private const Int32 _texCoordDefault = 0;
 		private const Int32 _texCoordMinimum = 0;
 		private Int32? _texCoord = _texCoordDefault;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "index", _index);
 			SerializeProperty(writer, "texCoord", _texCoord, _texCoordDefault);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "index": _index = DeserializePropertyValue<Int32>(ref reader); break;
-				case "texCoord": _texCoord = DeserializePropertyValue<Int32?>(ref reader); break;
+				case "index": DeserializePropertyValue<TextureInfo, Int32>(ref reader, this, out _index); break;
+				case "texCoord": DeserializePropertyValue<TextureInfo, Int32?>(ref reader, this, out _texCoord); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -831,6 +1355,37 @@ namespace SharpGLTF.Schema2
 	[global::System.CodeDom.Compiler.GeneratedCodeAttribute("SharpGLTF.CodeGen", "1.0.0.0")]
 	partial class MaterialPBRMetallicRoughness : ExtraProperties
 	{
+	
+		#region reflection
+	
+		public new const string SCHEMANAME = "pbrMetallicRoughness";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "baseColorFactor";
+			yield return "baseColorTexture";
+			yield return "metallicFactor";
+			yield return "metallicRoughnessTexture";
+			yield return "roughnessFactor";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "baseColorFactor": value = FIELDINFO.From("baseColorFactor",this, instance => instance._baseColorFactor ?? Vector4.One); return true;
+				case "baseColorTexture": value = FIELDINFO.From("baseColorTexture",this, instance => instance._baseColorTexture); return true;
+				case "metallicFactor": value = FIELDINFO.From("metallicFactor",this, instance => instance._metallicFactor ?? 1); return true;
+				case "metallicRoughnessTexture": value = FIELDINFO.From("metallicRoughnessTexture",this, instance => instance._metallicRoughnessTexture); return true;
+				case "roughnessFactor": value = FIELDINFO.From("roughnessFactor",this, instance => instance._roughnessFactor ?? 1); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
 	
 		private static readonly Vector4 _baseColorFactorDefault = Vector4.One;
 		private Vector4? _baseColorFactor = _baseColorFactorDefault;
@@ -849,8 +1404,11 @@ namespace SharpGLTF.Schema2
 		private const Double _roughnessFactorMaximum = 1;
 		private Double? _roughnessFactor = _roughnessFactorDefault;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "baseColorFactor", _baseColorFactor, _baseColorFactorDefault);
@@ -860,18 +1418,20 @@ namespace SharpGLTF.Schema2
 			SerializeProperty(writer, "roughnessFactor", _roughnessFactor, _roughnessFactorDefault);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "baseColorFactor": _baseColorFactor = DeserializePropertyValue<Vector4?>(ref reader); break;
-				case "baseColorTexture": _baseColorTexture = DeserializePropertyValue<TextureInfo>(ref reader); break;
-				case "metallicFactor": _metallicFactor = DeserializePropertyValue<Double?>(ref reader); break;
-				case "metallicRoughnessTexture": _metallicRoughnessTexture = DeserializePropertyValue<TextureInfo>(ref reader); break;
-				case "roughnessFactor": _roughnessFactor = DeserializePropertyValue<Double?>(ref reader); break;
+				case "baseColorFactor": DeserializePropertyValue<MaterialPBRMetallicRoughness, Vector4?>(ref reader, this, out _baseColorFactor); break;
+				case "baseColorTexture": DeserializePropertyValue<MaterialPBRMetallicRoughness, TextureInfo>(ref reader, this, out _baseColorTexture); break;
+				case "metallicFactor": DeserializePropertyValue<MaterialPBRMetallicRoughness, Double?>(ref reader, this, out _metallicFactor); break;
+				case "metallicRoughnessTexture": DeserializePropertyValue<MaterialPBRMetallicRoughness, TextureInfo>(ref reader, this, out _metallicRoughnessTexture); break;
+				case "roughnessFactor": DeserializePropertyValue<MaterialPBRMetallicRoughness, Double?>(ref reader, this, out _roughnessFactor); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -882,24 +1442,52 @@ namespace SharpGLTF.Schema2
 	partial class MaterialNormalTextureInfo : TextureInfo
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "normalTextureInfo";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "scale";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "scale": value = FIELDINFO.From("scale",this, instance => instance._scale ?? 1); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private const Double _scaleDefault = 1;
 		private Double? _scale = _scaleDefault;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "scale", _scale, _scaleDefault);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "scale": _scale = DeserializePropertyValue<Double?>(ref reader); break;
+				case "scale": DeserializePropertyValue<MaterialNormalTextureInfo, Double?>(ref reader, this, out _scale); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -910,26 +1498,54 @@ namespace SharpGLTF.Schema2
 	partial class MaterialOcclusionTextureInfo : TextureInfo
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "occlusionTextureInfo";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "strength";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "strength": value = FIELDINFO.From("strength",this, instance => instance._strength ?? 1); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private const Double _strengthDefault = 1;
 		private const Double _strengthMinimum = 0;
 		private const Double _strengthMaximum = 1;
 		private Double? _strength = _strengthDefault;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "strength", _strength, _strengthDefault);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "strength": _strength = DeserializePropertyValue<Double?>(ref reader); break;
+				case "strength": DeserializePropertyValue<MaterialOcclusionTextureInfo, Double?>(ref reader, this, out _strength); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -942,6 +1558,43 @@ namespace SharpGLTF.Schema2
 	[global::System.CodeDom.Compiler.GeneratedCodeAttribute("SharpGLTF.CodeGen", "1.0.0.0")]
 	partial class Material : LogicalChildOfRoot
 	{
+	
+		#region reflection
+	
+		public new const string SCHEMANAME = "material";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "alphaCutoff";
+			yield return "alphaMode";
+			yield return "doubleSided";
+			yield return "emissiveFactor";
+			yield return "emissiveTexture";
+			yield return "normalTexture";
+			yield return "occlusionTexture";
+			yield return "pbrMetallicRoughness";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "alphaCutoff": value = FIELDINFO.From("alphaCutoff",this, instance => instance._alphaCutoff ?? 0.5); return true;
+				case "alphaMode": value = FIELDINFO.From("alphaMode",this, instance => instance._alphaMode ?? AlphaMode.OPAQUE); return true;
+				case "doubleSided": value = FIELDINFO.From("doubleSided",this, instance => instance._doubleSided ?? false); return true;
+				case "emissiveFactor": value = FIELDINFO.From("emissiveFactor",this, instance => instance._emissiveFactor ?? Vector3.Zero); return true;
+				case "emissiveTexture": value = FIELDINFO.From("emissiveTexture",this, instance => instance._emissiveTexture); return true;
+				case "normalTexture": value = FIELDINFO.From("normalTexture",this, instance => instance._normalTexture); return true;
+				case "occlusionTexture": value = FIELDINFO.From("occlusionTexture",this, instance => instance._occlusionTexture); return true;
+				case "pbrMetallicRoughness": value = FIELDINFO.From("pbrMetallicRoughness",this, instance => instance._pbrMetallicRoughness); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
 	
 		private const Double _alphaCutoffDefault = 0.5;
 		private const Double _alphaCutoffMinimum = 0;
@@ -964,8 +1617,11 @@ namespace SharpGLTF.Schema2
 		
 		private MaterialPBRMetallicRoughness _pbrMetallicRoughness;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "alphaCutoff", _alphaCutoff, _alphaCutoffDefault);
@@ -978,21 +1634,23 @@ namespace SharpGLTF.Schema2
 			SerializePropertyObject(writer, "pbrMetallicRoughness", _pbrMetallicRoughness);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "alphaCutoff": _alphaCutoff = DeserializePropertyValue<Double?>(ref reader); break;
+				case "alphaCutoff": DeserializePropertyValue<Material, Double?>(ref reader, this, out _alphaCutoff); break;
 				case "alphaMode": _alphaMode = DeserializePropertyValue<AlphaMode>(ref reader); break;
-				case "doubleSided": _doubleSided = DeserializePropertyValue<Boolean?>(ref reader); break;
-				case "emissiveFactor": _emissiveFactor = DeserializePropertyValue<Vector3?>(ref reader); break;
-				case "emissiveTexture": _emissiveTexture = DeserializePropertyValue<TextureInfo>(ref reader); break;
-				case "normalTexture": _normalTexture = DeserializePropertyValue<MaterialNormalTextureInfo>(ref reader); break;
-				case "occlusionTexture": _occlusionTexture = DeserializePropertyValue<MaterialOcclusionTextureInfo>(ref reader); break;
-				case "pbrMetallicRoughness": _pbrMetallicRoughness = DeserializePropertyValue<MaterialPBRMetallicRoughness>(ref reader); break;
+				case "doubleSided": DeserializePropertyValue<Material, Boolean?>(ref reader, this, out _doubleSided); break;
+				case "emissiveFactor": DeserializePropertyValue<Material, Vector3?>(ref reader, this, out _emissiveFactor); break;
+				case "emissiveTexture": DeserializePropertyValue<Material, TextureInfo>(ref reader, this, out _emissiveTexture); break;
+				case "normalTexture": DeserializePropertyValue<Material, MaterialNormalTextureInfo>(ref reader, this, out _normalTexture); break;
+				case "occlusionTexture": DeserializePropertyValue<Material, MaterialOcclusionTextureInfo>(ref reader, this, out _occlusionTexture); break;
+				case "pbrMetallicRoughness": DeserializePropertyValue<Material, MaterialPBRMetallicRoughness>(ref reader, this, out _pbrMetallicRoughness); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -1006,6 +1664,37 @@ namespace SharpGLTF.Schema2
 	partial class MeshPrimitive : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "primitive";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "attributes";
+			yield return "indices";
+			yield return "material";
+			yield return "mode";
+			yield return "targets";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "attributes": value = FIELDINFO.From("attributes",this, instance => instance._attributes); return true;
+				case "indices": value = FIELDINFO.From("indices",this, instance => instance._indices); return true;
+				case "material": value = FIELDINFO.From("material",this, instance => instance._material); return true;
+				case "mode": value = FIELDINFO.From("mode",this, instance => instance._mode ?? (PrimitiveType)4); return true;
+				case "targets": value = FIELDINFO.From("targets",this, instance => instance._targets); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Dictionary<String,Int32> _attributes;
 		
 		private Int32? _indices;
@@ -1018,8 +1707,11 @@ namespace SharpGLTF.Schema2
 		private const int _targetsMinItems = 1;
 		private List<Dictionary<String,Int32>> _targets;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "attributes", _attributes);
@@ -1029,18 +1721,20 @@ namespace SharpGLTF.Schema2
 			SerializeProperty(writer, "targets", _targets, _targetsMinItems);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "attributes": DeserializePropertyDictionary<Int32>(ref reader, _attributes); break;
-				case "indices": _indices = DeserializePropertyValue<Int32?>(ref reader); break;
-				case "material": _material = DeserializePropertyValue<Int32?>(ref reader); break;
+				case "attributes": DeserializePropertyDictionary<MeshPrimitive, Int32>(ref reader, this, _attributes); break;
+				case "indices": DeserializePropertyValue<MeshPrimitive, Int32?>(ref reader, this, out _indices); break;
+				case "material": DeserializePropertyValue<MeshPrimitive, Int32?>(ref reader, this, out _material); break;
 				case "mode": _mode = DeserializePropertyValue<PrimitiveType>(ref reader); break;
-				case "targets": DeserializePropertyList<Dictionary<String,Int32>>(ref reader, _targets); break;
+				case "targets": DeserializePropertyList<MeshPrimitive, Dictionary<String,Int32>>(ref reader, this, _targets); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -1055,29 +1749,59 @@ namespace SharpGLTF.Schema2
 	partial class Mesh : LogicalChildOfRoot
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "mesh";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "primitives";
+			yield return "weights";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "primitives": value = FIELDINFO.From("primitives",this, instance => instance._primitives); return true;
+				case "weights": value = FIELDINFO.From("weights",this, instance => instance._weights); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private const int _primitivesMinItems = 1;
 		private ChildrenList<MeshPrimitive,Mesh> _primitives;
 		
 		private const int _weightsMinItems = 1;
 		private List<Double> _weights;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "primitives", _primitives, _primitivesMinItems);
 			SerializeProperty(writer, "weights", _weights, _weightsMinItems);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "primitives": DeserializePropertyList<MeshPrimitive>(ref reader, _primitives); break;
-				case "weights": DeserializePropertyList<Double>(ref reader, _weights); break;
+				case "primitives": DeserializePropertyList<Mesh, MeshPrimitive>(ref reader, this, _primitives); break;
+				case "weights": DeserializePropertyList<Mesh, Double>(ref reader, this, _weights); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -1093,57 +1817,105 @@ namespace SharpGLTF.Schema2
 	partial class Node : LogicalChildOfRoot
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "node";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "camera";
+			yield return "children";
+			yield return "matrix";
+			yield return "mesh";
+			yield return "rotation";
+			yield return "scale";
+			yield return "skin";
+			yield return "translation";
+			yield return "weights";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "camera": value = FIELDINFO.From("camera",this, instance => instance._camera); return true;
+				case "children": value = FIELDINFO.From("children",this, instance => instance._children); return true;
+				case "matrix": value = FIELDINFO.From("matrix",this, instance => instance._matrix ?? System.Numerics.Matrix4x4.Identity); return true;
+				case "mesh": value = FIELDINFO.From("mesh",this, instance => instance._mesh); return true;
+				case "rotation": value = FIELDINFO.From("rotation",this, instance => instance._rotation ?? Quaternion.Identity); return true;
+				case "scale": value = FIELDINFO.From("scale",this, instance => instance._scale ?? Vector3.One); return true;
+				case "skin": value = FIELDINFO.From("skin",this, instance => instance._skin); return true;
+				case "translation": value = FIELDINFO.From("translation",this, instance => instance._translation ?? Vector3.Zero); return true;
+				case "weights": value = FIELDINFO.From("weights",this, instance => instance._weights); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Int32? _camera;
 		
 		private const int _childrenMinItems = 1;
 		private List<Int32> _children;
 		
-		private Matrix4x4? _matrix;
+		private static readonly Matrix4x4 _matrixDefault = System.Numerics.Matrix4x4.Identity;
+		private Matrix4x4? _matrix = _matrixDefault;
 		
 		private Int32? _mesh;
 		
-		private Quaternion? _rotation;
+		private static readonly Quaternion _rotationDefault = Quaternion.Identity;
+		private Quaternion? _rotation = _rotationDefault;
 		
-		private Vector3? _scale;
+		private static readonly Vector3 _scaleDefault = Vector3.One;
+		private Vector3? _scale = _scaleDefault;
 		
 		private Int32? _skin;
 		
-		private Vector3? _translation;
+		private static readonly Vector3 _translationDefault = Vector3.Zero;
+		private Vector3? _translation = _translationDefault;
 		
 		private const int _weightsMinItems = 1;
 		private List<Double> _weights;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "camera", _camera);
 			SerializeProperty(writer, "children", _children, _childrenMinItems);
-			SerializeProperty(writer, "matrix", _matrix);
+			SerializeProperty(writer, "matrix", _matrix, _matrixDefault);
 			SerializeProperty(writer, "mesh", _mesh);
-			SerializeProperty(writer, "rotation", _rotation);
-			SerializeProperty(writer, "scale", _scale);
+			SerializeProperty(writer, "rotation", _rotation, _rotationDefault);
+			SerializeProperty(writer, "scale", _scale, _scaleDefault);
 			SerializeProperty(writer, "skin", _skin);
-			SerializeProperty(writer, "translation", _translation);
+			SerializeProperty(writer, "translation", _translation, _translationDefault);
 			SerializeProperty(writer, "weights", _weights, _weightsMinItems);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "camera": _camera = DeserializePropertyValue<Int32?>(ref reader); break;
-				case "children": DeserializePropertyList<Int32>(ref reader, _children); break;
-				case "matrix": _matrix = DeserializePropertyValue<Matrix4x4?>(ref reader); break;
-				case "mesh": _mesh = DeserializePropertyValue<Int32?>(ref reader); break;
-				case "rotation": _rotation = DeserializePropertyValue<Quaternion?>(ref reader); break;
-				case "scale": _scale = DeserializePropertyValue<Vector3?>(ref reader); break;
-				case "skin": _skin = DeserializePropertyValue<Int32?>(ref reader); break;
-				case "translation": _translation = DeserializePropertyValue<Vector3?>(ref reader); break;
-				case "weights": DeserializePropertyList<Double>(ref reader, _weights); break;
+				case "camera": DeserializePropertyValue<Node, Int32?>(ref reader, this, out _camera); break;
+				case "children": DeserializePropertyList<Node, Int32>(ref reader, this, _children); break;
+				case "matrix": DeserializePropertyValue<Node, Matrix4x4?>(ref reader, this, out _matrix); break;
+				case "mesh": DeserializePropertyValue<Node, Int32?>(ref reader, this, out _mesh); break;
+				case "rotation": DeserializePropertyValue<Node, Quaternion?>(ref reader, this, out _rotation); break;
+				case "scale": DeserializePropertyValue<Node, Vector3?>(ref reader, this, out _scale); break;
+				case "skin": DeserializePropertyValue<Node, Int32?>(ref reader, this, out _skin); break;
+				case "translation": DeserializePropertyValue<Node, Vector3?>(ref reader, this, out _translation); break;
+				case "weights": DeserializePropertyList<Node, Double>(ref reader, this, _weights); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -1157,6 +1929,35 @@ namespace SharpGLTF.Schema2
 	partial class TextureSampler : LogicalChildOfRoot
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "sampler";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "magFilter";
+			yield return "minFilter";
+			yield return "wrapS";
+			yield return "wrapT";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "magFilter": value = FIELDINFO.From("magFilter",this, instance => instance._magFilter); return true;
+				case "minFilter": value = FIELDINFO.From("minFilter",this, instance => instance._minFilter); return true;
+				case "wrapS": value = FIELDINFO.From("wrapS",this, instance => instance._wrapS ?? (TextureWrapMode)10497); return true;
+				case "wrapT": value = FIELDINFO.From("wrapT",this, instance => instance._wrapT ?? (TextureWrapMode)10497); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private TextureInterpolationFilter? _magFilter;
 		
 		private TextureMipMapFilter? _minFilter;
@@ -1167,8 +1968,11 @@ namespace SharpGLTF.Schema2
 		private const TextureWrapMode _wrapTDefault = (TextureWrapMode)10497;
 		private TextureWrapMode? _wrapT = _wrapTDefault;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializePropertyEnumValue<TextureInterpolationFilter>(writer, "magFilter", _magFilter);
@@ -1177,7 +1981,7 @@ namespace SharpGLTF.Schema2
 			SerializePropertyEnumValue<TextureWrapMode>(writer, "wrapT", _wrapT, _wrapTDefault);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
@@ -1188,6 +1992,8 @@ namespace SharpGLTF.Schema2
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -1201,24 +2007,52 @@ namespace SharpGLTF.Schema2
 	partial class Scene : LogicalChildOfRoot
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "scene";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "nodes";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "nodes": value = FIELDINFO.From("nodes",this, instance => instance._nodes); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private const int _nodesMinItems = 1;
 		private List<Int32> _nodes;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "nodes", _nodes, _nodesMinItems);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "nodes": DeserializePropertyList<Int32>(ref reader, _nodes); break;
+				case "nodes": DeserializePropertyList<Scene, Int32>(ref reader, this, _nodes); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -1232,6 +2066,33 @@ namespace SharpGLTF.Schema2
 	partial class Skin : LogicalChildOfRoot
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "skin";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "inverseBindMatrices";
+			yield return "joints";
+			yield return "skeleton";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "inverseBindMatrices": value = FIELDINFO.From("inverseBindMatrices",this, instance => instance._inverseBindMatrices); return true;
+				case "joints": value = FIELDINFO.From("joints",this, instance => instance._joints); return true;
+				case "skeleton": value = FIELDINFO.From("skeleton",this, instance => instance._skeleton); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Int32? _inverseBindMatrices;
 		
 		private const int _jointsMinItems = 1;
@@ -1239,8 +2100,11 @@ namespace SharpGLTF.Schema2
 		
 		private Int32? _skeleton;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "inverseBindMatrices", _inverseBindMatrices);
@@ -1248,16 +2112,18 @@ namespace SharpGLTF.Schema2
 			SerializeProperty(writer, "skeleton", _skeleton);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "inverseBindMatrices": _inverseBindMatrices = DeserializePropertyValue<Int32?>(ref reader); break;
-				case "joints": DeserializePropertyList<Int32>(ref reader, _joints); break;
-				case "skeleton": _skeleton = DeserializePropertyValue<Int32?>(ref reader); break;
+				case "inverseBindMatrices": DeserializePropertyValue<Skin, Int32?>(ref reader, this, out _inverseBindMatrices); break;
+				case "joints": DeserializePropertyList<Skin, Int32>(ref reader, this, _joints); break;
+				case "skeleton": DeserializePropertyValue<Skin, Int32?>(ref reader, this, out _skeleton); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -1271,27 +2137,57 @@ namespace SharpGLTF.Schema2
 	partial class Texture : LogicalChildOfRoot
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "texture";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "sampler";
+			yield return "source";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "sampler": value = FIELDINFO.From("sampler",this, instance => instance._sampler); return true;
+				case "source": value = FIELDINFO.From("source",this, instance => instance._source); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Int32? _sampler;
 		
 		private Int32? _source;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "sampler", _sampler);
 			SerializeProperty(writer, "source", _source);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "sampler": _sampler = DeserializePropertyValue<Int32?>(ref reader); break;
-				case "source": _source = DeserializePropertyValue<Int32?>(ref reader); break;
+				case "sampler": DeserializePropertyValue<Texture, Int32?>(ref reader, this, out _sampler); break;
+				case "source": DeserializePropertyValue<Texture, Int32?>(ref reader, this, out _source); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -1304,6 +2200,61 @@ namespace SharpGLTF.Schema2
 	[global::System.CodeDom.Compiler.GeneratedCodeAttribute("SharpGLTF.CodeGen", "1.0.0.0")]
 	partial class ModelRoot : ExtraProperties
 	{
+	
+		#region reflection
+	
+		public new const string SCHEMANAME = "glTF";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "asset";
+			yield return "extensionsRequired";
+			yield return "extensionsUsed";
+			yield return "accessors";
+			yield return "animations";
+			yield return "bufferViews";
+			yield return "buffers";
+			yield return "cameras";
+			yield return "images";
+			yield return "materials";
+			yield return "meshes";
+			yield return "nodes";
+			yield return "samplers";
+			yield return "scene";
+			yield return "scenes";
+			yield return "skins";
+			yield return "textures";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "asset": value = FIELDINFO.From("asset",this, instance => instance._asset); return true;
+				case "extensionsRequired": value = FIELDINFO.From("extensionsRequired",this, instance => instance._extensionsRequired); return true;
+				case "extensionsUsed": value = FIELDINFO.From("extensionsUsed",this, instance => instance._extensionsUsed); return true;
+				case "accessors": value = FIELDINFO.From("accessors",this, instance => instance._accessors); return true;
+				case "animations": value = FIELDINFO.From("animations",this, instance => instance._animations); return true;
+				case "bufferViews": value = FIELDINFO.From("bufferViews",this, instance => instance._bufferViews); return true;
+				case "buffers": value = FIELDINFO.From("buffers",this, instance => instance._buffers); return true;
+				case "cameras": value = FIELDINFO.From("cameras",this, instance => instance._cameras); return true;
+				case "images": value = FIELDINFO.From("images",this, instance => instance._images); return true;
+				case "materials": value = FIELDINFO.From("materials",this, instance => instance._materials); return true;
+				case "meshes": value = FIELDINFO.From("meshes",this, instance => instance._meshes); return true;
+				case "nodes": value = FIELDINFO.From("nodes",this, instance => instance._nodes); return true;
+				case "samplers": value = FIELDINFO.From("samplers",this, instance => instance._samplers); return true;
+				case "scene": value = FIELDINFO.From("scene",this, instance => instance._scene); return true;
+				case "scenes": value = FIELDINFO.From("scenes",this, instance => instance._scenes); return true;
+				case "skins": value = FIELDINFO.From("skins",this, instance => instance._skins); return true;
+				case "textures": value = FIELDINFO.From("textures",this, instance => instance._textures); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
 	
 		private Asset _asset;
 		
@@ -1354,8 +2305,11 @@ namespace SharpGLTF.Schema2
 		private const int _texturesMinItems = 1;
 		private ChildrenList<Texture,ModelRoot> _textures;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializePropertyObject(writer, "asset", _asset);
@@ -1377,30 +2331,32 @@ namespace SharpGLTF.Schema2
 			SerializeProperty(writer, "textures", _textures, _texturesMinItems);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "asset": _asset = DeserializePropertyValue<Asset>(ref reader); break;
-				case "extensionsRequired": DeserializePropertyList<String>(ref reader, _extensionsRequired); break;
-				case "extensionsUsed": DeserializePropertyList<String>(ref reader, _extensionsUsed); break;
-				case "accessors": DeserializePropertyList<Accessor>(ref reader, _accessors); break;
-				case "animations": DeserializePropertyList<Animation>(ref reader, _animations); break;
-				case "bufferViews": DeserializePropertyList<BufferView>(ref reader, _bufferViews); break;
-				case "buffers": DeserializePropertyList<Buffer>(ref reader, _buffers); break;
-				case "cameras": DeserializePropertyList<Camera>(ref reader, _cameras); break;
-				case "images": DeserializePropertyList<Image>(ref reader, _images); break;
-				case "materials": DeserializePropertyList<Material>(ref reader, _materials); break;
-				case "meshes": DeserializePropertyList<Mesh>(ref reader, _meshes); break;
-				case "nodes": DeserializePropertyList<Node>(ref reader, _nodes); break;
-				case "samplers": DeserializePropertyList<TextureSampler>(ref reader, _samplers); break;
-				case "scene": _scene = DeserializePropertyValue<Int32?>(ref reader); break;
-				case "scenes": DeserializePropertyList<Scene>(ref reader, _scenes); break;
-				case "skins": DeserializePropertyList<Skin>(ref reader, _skins); break;
-				case "textures": DeserializePropertyList<Texture>(ref reader, _textures); break;
+				case "asset": DeserializePropertyValue<ModelRoot, Asset>(ref reader, this, out _asset); break;
+				case "extensionsRequired": DeserializePropertyList<ModelRoot, String>(ref reader, this, _extensionsRequired); break;
+				case "extensionsUsed": DeserializePropertyList<ModelRoot, String>(ref reader, this, _extensionsUsed); break;
+				case "accessors": DeserializePropertyList<ModelRoot, Accessor>(ref reader, this, _accessors); break;
+				case "animations": DeserializePropertyList<ModelRoot, Animation>(ref reader, this, _animations); break;
+				case "bufferViews": DeserializePropertyList<ModelRoot, BufferView>(ref reader, this, _bufferViews); break;
+				case "buffers": DeserializePropertyList<ModelRoot, Buffer>(ref reader, this, _buffers); break;
+				case "cameras": DeserializePropertyList<ModelRoot, Camera>(ref reader, this, _cameras); break;
+				case "images": DeserializePropertyList<ModelRoot, Image>(ref reader, this, _images); break;
+				case "materials": DeserializePropertyList<ModelRoot, Material>(ref reader, this, _materials); break;
+				case "meshes": DeserializePropertyList<ModelRoot, Mesh>(ref reader, this, _meshes); break;
+				case "nodes": DeserializePropertyList<ModelRoot, Node>(ref reader, this, _nodes); break;
+				case "samplers": DeserializePropertyList<ModelRoot, TextureSampler>(ref reader, this, _samplers); break;
+				case "scene": DeserializePropertyValue<ModelRoot, Int32?>(ref reader, this, out _scene); break;
+				case "scenes": DeserializePropertyList<ModelRoot, Scene>(ref reader, this, _scenes); break;
+				case "skins": DeserializePropertyList<ModelRoot, Skin>(ref reader, this, _skins); break;
+				case "textures": DeserializePropertyList<ModelRoot, Texture>(ref reader, this, _textures); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
@@ -1414,14 +2370,44 @@ namespace SharpGLTF.Schema2
 	partial class Image : LogicalChildOfRoot
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "image";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "bufferView";
+			yield return "mimeType";
+			yield return "uri";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "bufferView": value = FIELDINFO.From("bufferView",this, instance => instance._bufferView); return true;
+				case "mimeType": value = FIELDINFO.From("mimeType",this, instance => instance._mimeType); return true;
+				case "uri": value = FIELDINFO.From("uri",this, instance => instance._uri); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Int32? _bufferView;
 		
 		private String _mimeType;
 		
 		private String _uri;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "bufferView", _bufferView);
@@ -1429,16 +2415,18 @@ namespace SharpGLTF.Schema2
 			SerializeProperty(writer, "uri", _uri);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "bufferView": _bufferView = DeserializePropertyValue<Int32?>(ref reader); break;
-				case "mimeType": _mimeType = DeserializePropertyValue<String>(ref reader); break;
-				case "uri": _uri = DeserializePropertyValue<String>(ref reader); break;
+				case "bufferView": DeserializePropertyValue<Image, Int32?>(ref reader, this, out _bufferView); break;
+				case "mimeType": DeserializePropertyValue<Image, String>(ref reader, this, out _mimeType); break;
+				case "uri": DeserializePropertyValue<Image, String>(ref reader, this, out _uri); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 

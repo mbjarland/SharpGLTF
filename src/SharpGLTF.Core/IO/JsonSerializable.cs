@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Numerics;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
 
-using System.Text.Json;
+using SharpGLTF.Collections;
 
 using JSONEXCEPTION = System.Text.Json.JsonException;
 using JSONTOKEN = System.Text.Json.JsonTokenType;
+
+using JSONREADER = System.Text.Json.Utf8JsonReader;
+using JSONWRITER = System.Text.Json.Utf8JsonWriter;
+
 
 namespace SharpGLTF.IO
 {
@@ -40,9 +42,15 @@ namespace SharpGLTF.IO
 
         #endregion
 
+        #region reflection
+        internal string _SchemaName => GetSchemaName();
+        protected virtual string GetSchemaName() => "JsonSerializable";
+
+        #endregion
+
         #region serialization
 
-        internal void Serialize(Utf8JsonWriter writer)
+        internal void Serialize(JSONWRITER writer)
         {
             Guard.NotNull(writer, nameof(writer));
 
@@ -51,9 +59,9 @@ namespace SharpGLTF.IO
             writer.WriteEndObject();
         }
 
-        protected abstract void SerializeProperties(Utf8JsonWriter writer);
+        protected abstract void SerializeProperties(JSONWRITER writer);
 
-        protected static void SerializeProperty(Utf8JsonWriter writer, string name, Object value)
+        protected static void SerializeProperty(JSONWRITER writer, string name, Object value)
         {
             if (value == null) return;
 
@@ -62,7 +70,7 @@ namespace SharpGLTF.IO
             _SerializeProperty(writer, name, value);
         }
 
-        protected static void SerializeProperty(Utf8JsonWriter writer, string name, Boolean? value, Boolean? defval = null)
+        protected static void SerializeProperty(JSONWRITER writer, string name, Boolean? value, Boolean? defval = null)
         {
             if (!value.HasValue) return;
             if (defval.HasValue && defval.Value.Equals(value.Value)) return;
@@ -72,7 +80,7 @@ namespace SharpGLTF.IO
             writer.WriteBoolean(name, value.Value);
         }
 
-        protected static void SerializeProperty(Utf8JsonWriter writer, string name, Int32? value, Int32? defval = null)
+        protected static void SerializeProperty(JSONWRITER writer, string name, Int32? value, Int32? defval = null)
         {
             if (!value.HasValue) return;
             if (defval.HasValue && defval.Value.Equals(value.Value)) return;
@@ -82,7 +90,7 @@ namespace SharpGLTF.IO
             writer.WriteNumber(name, value.Value);
         }
 
-        protected static void SerializeProperty(Utf8JsonWriter writer, string name, Single? value, Single? defval = null)
+        protected static void SerializeProperty(JSONWRITER writer, string name, Single? value, Single? defval = null)
         {
             if (!value.HasValue) return;
             if (defval.HasValue && defval.Value.Equals(value.Value)) return;
@@ -92,7 +100,7 @@ namespace SharpGLTF.IO
             writer.WriteNumber(name, value.Value);
         }
 
-        protected static void SerializeProperty(Utf8JsonWriter writer, string name, Double? value, Double? defval = null)
+        protected static void SerializeProperty(JSONWRITER writer, string name, Double? value, Double? defval = null)
         {
             if (!value.HasValue) return;
             if (defval.HasValue && defval.Value.Equals(value.Value)) return;
@@ -102,7 +110,7 @@ namespace SharpGLTF.IO
             writer.WriteNumber(name, value.Value);
         }
 
-        protected static void SerializeProperty(Utf8JsonWriter writer, string name, Vector2? value, Vector2? defval = null)
+        protected static void SerializeProperty(JSONWRITER writer, string name, Vector2? value, Vector2? defval = null)
         {
             if (!value.HasValue) return;
             if (defval.HasValue && defval.Value.Equals(value.Value)) return;
@@ -113,7 +121,7 @@ namespace SharpGLTF.IO
             writer.WriteVector2(value.Value);
         }
 
-        protected static void SerializeProperty(Utf8JsonWriter writer, string name, Vector3? value, Vector3? defval = null)
+        protected static void SerializeProperty(JSONWRITER writer, string name, Vector3? value, Vector3? defval = null)
         {
             if (!value.HasValue) return;
             if (defval.HasValue && defval.Value.Equals(value.Value)) return;
@@ -124,7 +132,7 @@ namespace SharpGLTF.IO
             writer.WriteVector3(value.Value);
         }
 
-        protected static void SerializeProperty(Utf8JsonWriter writer, string name, Vector4? value, Vector4? defval = null)
+        protected static void SerializeProperty(JSONWRITER writer, string name, Vector4? value, Vector4? defval = null)
         {
             if (!value.HasValue) return;
             if (defval.HasValue && defval.Value.Equals(value.Value)) return;
@@ -135,7 +143,7 @@ namespace SharpGLTF.IO
             writer.WriteVector4(value.Value);
         }
 
-        protected static void SerializeProperty(Utf8JsonWriter writer, string name, Quaternion? value, Quaternion? defval = null)
+        protected static void SerializeProperty(JSONWRITER writer, string name, Quaternion? value, Quaternion? defval = null)
         {
             if (!value.HasValue) return;
             if (defval.HasValue && defval.Value.Equals(value.Value)) return;
@@ -146,7 +154,7 @@ namespace SharpGLTF.IO
             writer.WriteQuaternion(value.Value);
         }
 
-        protected static void SerializeProperty(Utf8JsonWriter writer, string name, Matrix4x4? value, Matrix4x4? defval = null)
+        protected static void SerializeProperty(JSONWRITER writer, string name, Matrix4x4? value, Matrix4x4? defval = null)
         {
             if (!value.HasValue) return;
             if (defval.HasValue && defval.Value.Equals(value.Value)) return;
@@ -157,7 +165,7 @@ namespace SharpGLTF.IO
             writer.WriteMatrix4x4(value.Value);
         }
 
-        protected static void SerializePropertyEnumValue<T>(Utf8JsonWriter writer, string name, T? value, T? defval = null)
+        protected static void SerializePropertyEnumValue<T>(JSONWRITER writer, string name, T? value, T? defval = null)
             where T : struct
         {
             Guard.IsTrue(typeof(T).IsEnum, nameof(T));
@@ -170,7 +178,7 @@ namespace SharpGLTF.IO
             writer.WriteNumber(name, (int)(Object)value);
         }
 
-        protected static void SerializePropertyEnumSymbol<T>(Utf8JsonWriter writer, string name, T? value, T? defval = null)
+        protected static void SerializePropertyEnumSymbol<T>(JSONWRITER writer, string name, T? value, T? defval = null)
             where T : struct
         {
             Guard.IsTrue(typeof(T).IsEnum, nameof(T));
@@ -183,7 +191,7 @@ namespace SharpGLTF.IO
             writer.WriteString(name, Enum.GetName(typeof(T), value));
         }
 
-        protected static void SerializePropertyObject<T>(Utf8JsonWriter writer, string name, T value)
+        protected static void SerializePropertyObject<T>(JSONWRITER writer, string name, T value)
             where T : JsonSerializable
         {
             if (value == null) return;
@@ -193,7 +201,7 @@ namespace SharpGLTF.IO
             _SerializeProperty(writer, name, value);
         }
 
-        protected static void SerializeProperty<T>(Utf8JsonWriter writer, string name, IReadOnlyList<T> collection, int? minItems = 1)
+        protected static void SerializeProperty<T>(JSONWRITER writer, string name, IReadOnlyList<T> collection, int? minItems = 1)
         {
             if (collection == null) return;
             if (minItems.HasValue && collection.Count < minItems.Value) return;
@@ -209,7 +217,7 @@ namespace SharpGLTF.IO
             writer.WriteEndArray();
         }
 
-        protected static void SerializeProperty<T>(Utf8JsonWriter writer, string name, IReadOnlyDictionary<String, T> collection)
+        protected static void SerializeProperty<T>(JSONWRITER writer, string name, IReadOnlyDictionary<String, T> collection)
         {
             if (collection == null) return;
             if (collection.Count < 1) return;
@@ -225,7 +233,7 @@ namespace SharpGLTF.IO
             writer.WriteEndObject();
         }
 
-        private static void _SerializeProperty(Utf8JsonWriter writer, String name, Object value)
+        private static void _SerializeProperty(JSONWRITER writer, String name, Object value)
         {
             Guard.NotNull(writer, nameof(writer));
             Guard.NotNull(value, nameof(value));
@@ -245,7 +253,7 @@ namespace SharpGLTF.IO
             return false;
         }
 
-        private static void _SerializeValue(Utf8JsonWriter writer, Object value)
+        private static void _SerializeValue(JSONWRITER writer, Object value)
         {
             Guard.NotNull(writer, nameof(writer));
             Guard.NotNull(value, nameof(value));
@@ -312,7 +320,7 @@ namespace SharpGLTF.IO
 
         #region deserialization
 
-        internal void Deserialize(ref Utf8JsonReader reader)
+        internal void Deserialize(ref JSONREADER reader)
         {
             if (reader.TokenType == JSONTOKEN.PropertyName) reader.Read();
 
@@ -338,7 +346,7 @@ namespace SharpGLTF.IO
             throw new JSONEXCEPTION($"Unexpected token {reader.TokenType}");
         }
 
-        protected static Object DeserializeUnknownObject(ref Utf8JsonReader reader)
+        protected static Object DeserializeUnknownObject(ref JSONREADER reader)
         {
             if (reader.TokenType == JSONTOKEN.PropertyName) reader.Read();
 
@@ -383,13 +391,13 @@ namespace SharpGLTF.IO
             return reader.GetAnyValue();
         }
 
-        protected abstract void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader);
+        protected abstract void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader);
 
         protected static T DeserializePropertyValue<
             #if !NETSTANDARD
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)]
             #endif
-            T>(ref Utf8JsonReader reader)
+            T>(ref JSONREADER reader)
         {
             _TryCastValue<T>(ref reader, out Object v);
 
@@ -401,11 +409,43 @@ namespace SharpGLTF.IO
             return (T)v;
         }
 
+        protected static void DeserializePropertyValue<TParent,
+            #if !NETSTANDARD
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)]
+            #endif
+            T>(ref JSONREADER reader, TParent owner, out T property)
+            where TParent: class
+        {
+            _TryCastValue<T>(ref reader, out Object v);
+
+            System.Diagnostics.Debug.Assert(reader.TokenType != JSONTOKEN.StartArray);
+            System.Diagnostics.Debug.Assert(reader.TokenType != JSONTOKEN.StartObject);
+            System.Diagnostics.Debug.Assert(reader.TokenType != JSONTOKEN.PropertyName);
+            // System.Diagnostics.Debug.Assert(reader.TokenType != JsonToken.StartConstructor);
+
+            property = (T)v;
+
+            if (property is IChildOf<TParent> child)
+            {
+                child.SetLogicalParent(owner);
+            }
+        }
+
+        protected static void DeserializePropertyList<TParent,
+            #if !NETSTANDARD
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)]
+            #endif
+            T>(ref JSONREADER reader, TParent owner, IList<T> list)
+            where TParent : class
+        {
+            DeserializePropertyList<T>(ref reader, list);
+        }
+
         protected static void DeserializePropertyList<
             #if !NETSTANDARD
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)]
             #endif
-            T>(ref Utf8JsonReader reader, IList<T> list)
+            T>(ref JSONREADER reader, IList<T> list)
         {
             // Guard.NotNull(reader, nameof(reader));
             Guard.NotNull(list, nameof(list));
@@ -431,13 +471,23 @@ namespace SharpGLTF.IO
             if (list.Count == 0) throw new JSONEXCEPTION("Empty array found.");
 
             System.Diagnostics.Debug.Assert(reader.TokenType == JSONTOKEN.EndArray);
+        }        
+
+        protected static void DeserializePropertyDictionary<TParent,
+            #if !NETSTANDARD
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)]
+            #endif
+            T>(ref JSONREADER reader, TParent owner, IDictionary<string, T> dict)
+            where TParent : class
+        {
+            DeserializePropertyDictionary<T>(ref reader, dict);
         }
 
         protected static void DeserializePropertyDictionary<
             #if !NETSTANDARD
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)]
             #endif
-            T>(ref Utf8JsonReader reader, IDictionary<string, T> dict)
+            T>(ref JSONREADER reader, IDictionary<string, T> dict)            
         {
             Guard.NotNull(dict, nameof(dict));
 
@@ -472,7 +522,7 @@ namespace SharpGLTF.IO
             #if !NETSTANDARD
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.NonPublicConstructors)]
             #endif
-            T>(ref Utf8JsonReader reader, out Object value)
+            T>(ref JSONREADER reader, out Object value)
         {
             value = null;
 

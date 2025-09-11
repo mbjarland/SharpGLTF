@@ -23,6 +23,11 @@ using System.Text;
 using System.Numerics;
 using System.Text.Json;
 
+using JSONREADER = System.Text.Json.Utf8JsonReader;
+using JSONWRITER = System.Text.Json.Utf8JsonWriter;
+using FIELDINFO = SharpGLTF.Reflection.FieldInfo;
+
+
 namespace SharpGLTF.Schema2
 {
 	using Collections;
@@ -37,23 +42,51 @@ namespace SharpGLTF.Schema2
 	partial class MeshGpuInstancing : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "EXT_mesh_gpu_instancing";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "attributes";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "attributes": value = FIELDINFO.From("attributes",this, instance => instance._attributes); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private Dictionary<String,Int32> _attributes;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "attributes", _attributes);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "attributes": DeserializePropertyDictionary<Int32>(ref reader, _attributes); break;
+				case "attributes": DeserializePropertyDictionary<MeshGpuInstancing, Int32>(ref reader, this, _attributes); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 

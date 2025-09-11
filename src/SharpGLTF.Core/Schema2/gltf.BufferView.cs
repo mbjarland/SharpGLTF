@@ -158,9 +158,10 @@ namespace SharpGLTF.Schema2
 
         internal static bool AreEqual(BufferView bv, BYTES content, int byteStride, BufferMode? target)
         {
-            if (bv.Content.Array != content.Array) return false;
-            if (bv.Content.Offset != content.Offset) return false;
-            if (bv.Content.Count != content.Count) return false;
+            var bvContent = bv.Content;
+            if (bvContent.Array != content.Array) return false;
+            if (bvContent.Offset != content.Offset) return false;
+            if (bvContent.Count != content.Count) return false;
             if (bv.ByteStride != byteStride) return false;
             if (bv._target != target) return false;
             return true;
@@ -171,11 +172,15 @@ namespace SharpGLTF.Schema2
         /// taking into account if the source <see cref="BufferView"/> is strided.
         /// </summary>
         /// <returns>The number of bytes to access.</returns>
-        internal int GetAccessorByteLength(in Memory.AttributeFormat fmt, int count)
+        internal static int GetAccessorByteLength(in Memory.AttributeFormat fmt, int count, BufferView bv)
         {
             var elementByteSize = fmt.ByteSize;
-            if (this.ByteStride == 0) return elementByteSize * count;
-            return (this.ByteStride * (count - 1)) + elementByteSize;
+
+            if (bv == null || bv.ByteStride == 0) return elementByteSize * count;
+
+            System.Diagnostics.Debug.Assert(bv.ByteStride >= elementByteSize, "unexpected byte stride size.");
+
+            return (bv.ByteStride * (count - 1)) + elementByteSize;
         }
 
         #endregion
@@ -202,7 +207,7 @@ namespace SharpGLTF.Schema2
 
             if (bv.ByteStride > 0) validate.IsGreaterOrEqual("ElementByteSize", bv.ByteStride, format.ByteSize);
 
-            var accessorByteLength = bv.GetAccessorByteLength(format, count);
+            var accessorByteLength = GetAccessorByteLength(format, count, bv);
 
             // "Accessor(offset: {0}, length: {1}) does not fit referenced bufferView[% 3] length %4.";
             validate.IsNullOrInRange(("BufferView", bv.LogicalIndex), accessorByteOffset, accessorByteLength, bv.Content);
@@ -216,8 +221,7 @@ namespace SharpGLTF.Schema2
                 .IsNullOrIndex(nameof(Buffer), _buffer, this.LogicalParent.LogicalBuffers)
                 .NonNegative("ByteOffset", _byteOffset)
                 .IsGreaterOrEqual("ByteLength", _byteLength, _byteLengthMinimum);
-
-            // ByteStride must defined only with BufferMode.ARRAY_BUFFER, be multiple of 4, and between 4 and 252
+            
             if (!_byteStride.HasValue) return;
 
             validate

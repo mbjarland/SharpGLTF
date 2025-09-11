@@ -23,6 +23,11 @@ using System.Text;
 using System.Numerics;
 using System.Text.Json;
 
+using JSONREADER = System.Text.Json.Utf8JsonReader;
+using JSONWRITER = System.Text.Json.Utf8JsonWriter;
+using FIELDINFO = SharpGLTF.Reflection.FieldInfo;
+
+
 namespace SharpGLTF.Schema2
 {
 	using Collections;
@@ -37,6 +42,35 @@ namespace SharpGLTF.Schema2
 	partial class TextureTransform : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "KHR_texture_transform";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "offset";
+			yield return "rotation";
+			yield return "scale";
+			yield return "texCoord";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "offset": value = FIELDINFO.From("offset",this, instance => instance._offset ?? Vector2.Zero); return true;
+				case "rotation": value = FIELDINFO.From("rotation",this, instance => instance._rotation ?? 0); return true;
+				case "scale": value = FIELDINFO.From("scale",this, instance => instance._scale ?? Vector2.One); return true;
+				case "texCoord": value = FIELDINFO.From("texCoord",this, instance => instance._texCoord); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private static readonly Vector2 _offsetDefault = Vector2.Zero;
 		private Vector2? _offset = _offsetDefault;
 		
@@ -49,8 +83,11 @@ namespace SharpGLTF.Schema2
 		private const Int32 _texCoordMinimum = 0;
 		private Int32? _texCoord;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "offset", _offset, _offsetDefault);
@@ -59,17 +96,19 @@ namespace SharpGLTF.Schema2
 			SerializeProperty(writer, "texCoord", _texCoord);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "offset": _offset = DeserializePropertyValue<Vector2?>(ref reader); break;
-				case "rotation": _rotation = DeserializePropertyValue<Double?>(ref reader); break;
-				case "scale": _scale = DeserializePropertyValue<Vector2?>(ref reader); break;
-				case "texCoord": _texCoord = DeserializePropertyValue<Int32?>(ref reader); break;
+				case "offset": DeserializePropertyValue<TextureTransform, Vector2?>(ref reader, this, out _offset); break;
+				case "rotation": DeserializePropertyValue<TextureTransform, Double?>(ref reader, this, out _rotation); break;
+				case "scale": DeserializePropertyValue<TextureTransform, Vector2?>(ref reader, this, out _scale); break;
+				case "texCoord": DeserializePropertyValue<TextureTransform, Int32?>(ref reader, this, out _texCoord); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 

@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>    
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>SharpGLTF</RootNamespace>
+  </PropertyGroup>
+
+	<PropertyGroup>		
+		<Description>SharpGLTF.CodeGen.Core is part of the SharpGLTF development kit, and it's used to generate code for glTF extensions.</Description>
+	</PropertyGroup>
+
+	<ItemGroup>
+    <PackageReference Include="LibGit2Sharp" />
+    <PackageReference Include="NJsonSchema.CodeGeneration.CSharp" />
+    <PackageReference Include="NJsonSchema.NewtonsoftJson" />
+  </ItemGroup>  
+
+</Project>

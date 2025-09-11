@@ -23,6 +23,11 @@ using System.Text;
 using System.Numerics;
 using System.Text.Json;
 
+using JSONREADER = System.Text.Json.Utf8JsonReader;
+using JSONWRITER = System.Text.Json.Utf8JsonWriter;
+using FIELDINFO = SharpGLTF.Reflection.FieldInfo;
+
+
 namespace SharpGLTF.Schema2
 {
 	using Collections;
@@ -37,6 +42,35 @@ namespace SharpGLTF.Schema2
 	partial class MaterialSheen : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "KHR_materials_sheen";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "sheenColorFactor";
+			yield return "sheenColorTexture";
+			yield return "sheenRoughnessFactor";
+			yield return "sheenRoughnessTexture";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "sheenColorFactor": value = FIELDINFO.From("sheenColorFactor",this, instance => instance._sheenColorFactor ?? Vector3.Zero); return true;
+				case "sheenColorTexture": value = FIELDINFO.From("sheenColorTexture",this, instance => instance._sheenColorTexture); return true;
+				case "sheenRoughnessFactor": value = FIELDINFO.From("sheenRoughnessFactor",this, instance => instance._sheenRoughnessFactor ?? 0); return true;
+				case "sheenRoughnessTexture": value = FIELDINFO.From("sheenRoughnessTexture",this, instance => instance._sheenRoughnessTexture); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private static readonly Vector3 _sheenColorFactorDefault = Vector3.Zero;
 		private Vector3? _sheenColorFactor = _sheenColorFactorDefault;
 		
@@ -49,8 +83,11 @@ namespace SharpGLTF.Schema2
 		
 		private TextureInfo _sheenRoughnessTexture;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "sheenColorFactor", _sheenColorFactor, _sheenColorFactorDefault);
@@ -59,17 +96,19 @@ namespace SharpGLTF.Schema2
 			SerializePropertyObject(writer, "sheenRoughnessTexture", _sheenRoughnessTexture);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "sheenColorFactor": _sheenColorFactor = DeserializePropertyValue<Vector3?>(ref reader); break;
-				case "sheenColorTexture": _sheenColorTexture = DeserializePropertyValue<TextureInfo>(ref reader); break;
-				case "sheenRoughnessFactor": _sheenRoughnessFactor = DeserializePropertyValue<Single?>(ref reader); break;
-				case "sheenRoughnessTexture": _sheenRoughnessTexture = DeserializePropertyValue<TextureInfo>(ref reader); break;
+				case "sheenColorFactor": DeserializePropertyValue<MaterialSheen, Vector3?>(ref reader, this, out _sheenColorFactor); break;
+				case "sheenColorTexture": DeserializePropertyValue<MaterialSheen, TextureInfo>(ref reader, this, out _sheenColorTexture); break;
+				case "sheenRoughnessFactor": DeserializePropertyValue<MaterialSheen, Single?>(ref reader, this, out _sheenRoughnessFactor); break;
+				case "sheenRoughnessTexture": DeserializePropertyValue<MaterialSheen, TextureInfo>(ref reader, this, out _sheenRoughnessTexture); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 

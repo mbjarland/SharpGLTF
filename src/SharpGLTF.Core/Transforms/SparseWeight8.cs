@@ -33,8 +33,7 @@ namespace SharpGLTF.Transforms
 
         private string _GetDebuggerDisplay()
         {
-            var iw = this.GetIndexedWeights()
-                .Where(item => item.Weight != 0)
+            var iw = this.GetNonZeroWeights()
                 .Select(item => $"[{item.Index}]={item.Weight}");
 
             var txt = string.Join(" ", iw);
@@ -540,6 +539,18 @@ namespace SharpGLTF.Transforms
             yield return (Index7, Weight7);
         }
 
+        public IEnumerable<(int Index, float Weight)> GetNonZeroWeights()
+        {
+            if (Weight0 != 0) yield return (Index0, Weight0);
+            if (Weight1 != 0) yield return (Index1, Weight1);
+            if (Weight2 != 0) yield return (Index2, Weight2);
+            if (Weight3 != 0) yield return (Index3, Weight3);
+            if (Weight4 != 0) yield return (Index4, Weight4);
+            if (Weight5 != 0) yield return (Index5, Weight5);
+            if (Weight6 != 0) yield return (Index6, Weight6);
+            if (Weight7 != 0) yield return (Index7, Weight7);
+        }
+
         public static SparseWeight8 Blend(ReadOnlySpan<SparseWeight8> sparses, ReadOnlySpan<float> weight)
         {
             var r = default(SparseWeight8);
@@ -674,17 +685,7 @@ namespace SharpGLTF.Transforms
             return new SparseWeight8(rrr);
         }
 
-        internal IEnumerable<(int Index, float Weight)> GetNonZeroWeights()
-        {
-            if (Weight0 != 0) yield return (Index0, Weight0);
-            if (Weight1 != 0) yield return (Index1, Weight1);
-            if (Weight2 != 0) yield return (Index2, Weight2);
-            if (Weight3 != 0) yield return (Index3, Weight3);
-            if (Weight4 != 0) yield return (Index4, Weight4);
-            if (Weight5 != 0) yield return (Index5, Weight5);
-            if (Weight6 != 0) yield return (Index6, Weight6);
-            if (Weight7 != 0) yield return (Index7, Weight7);
-        }
+        
 
         private float GetExpandedAt(int idx)
         {

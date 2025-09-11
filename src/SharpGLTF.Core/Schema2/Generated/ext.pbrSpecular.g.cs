@@ -23,6 +23,11 @@ using System.Text;
 using System.Numerics;
 using System.Text.Json;
 
+using JSONREADER = System.Text.Json.Utf8JsonReader;
+using JSONWRITER = System.Text.Json.Utf8JsonWriter;
+using FIELDINFO = SharpGLTF.Reflection.FieldInfo;
+
+
 namespace SharpGLTF.Schema2
 {
 	using Collections;
@@ -37,6 +42,35 @@ namespace SharpGLTF.Schema2
 	partial class MaterialSpecular : ExtraProperties
 	{
 	
+		#region reflection
+	
+		public new const string SCHEMANAME = "KHR_materials_specular";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "specularColorFactor";
+			yield return "specularColorTexture";
+			yield return "specularFactor";
+			yield return "specularTexture";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "specularColorFactor": value = FIELDINFO.From("specularColorFactor",this, instance => instance._specularColorFactor ?? Vector3.One); return true;
+				case "specularColorTexture": value = FIELDINFO.From("specularColorTexture",this, instance => instance._specularColorTexture); return true;
+				case "specularFactor": value = FIELDINFO.From("specularFactor",this, instance => instance._specularFactor ?? 1); return true;
+				case "specularTexture": value = FIELDINFO.From("specularTexture",this, instance => instance._specularTexture); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
+	
 		private static readonly Vector3 _specularColorFactorDefault = Vector3.One;
 		private Vector3? _specularColorFactor = _specularColorFactorDefault;
 		
@@ -49,8 +83,11 @@ namespace SharpGLTF.Schema2
 		
 		private TextureInfo _specularTexture;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "specularColorFactor", _specularColorFactor, _specularColorFactorDefault);
@@ -59,17 +96,19 @@ namespace SharpGLTF.Schema2
 			SerializePropertyObject(writer, "specularTexture", _specularTexture);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "specularColorFactor": _specularColorFactor = DeserializePropertyValue<Vector3?>(ref reader); break;
-				case "specularColorTexture": _specularColorTexture = DeserializePropertyValue<TextureInfo>(ref reader); break;
-				case "specularFactor": _specularFactor = DeserializePropertyValue<Double?>(ref reader); break;
-				case "specularTexture": _specularTexture = DeserializePropertyValue<TextureInfo>(ref reader); break;
+				case "specularColorFactor": DeserializePropertyValue<MaterialSpecular, Vector3?>(ref reader, this, out _specularColorFactor); break;
+				case "specularColorTexture": DeserializePropertyValue<MaterialSpecular, TextureInfo>(ref reader, this, out _specularColorTexture); break;
+				case "specularFactor": DeserializePropertyValue<MaterialSpecular, Double?>(ref reader, this, out _specularFactor); break;
+				case "specularTexture": DeserializePropertyValue<MaterialSpecular, TextureInfo>(ref reader, this, out _specularTexture); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 

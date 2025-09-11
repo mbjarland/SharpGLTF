@@ -1,15 +1,27 @@
 ﻿using System.Collections.Generic;
 
+using SharpGLTF.Validation;
+
+using ROOT = SharpGLTF.Schema2.ModelRoot;
+
 namespace SharpGLTF.Schema2
 {
-    using SharpGLTF.Validation;
-    using ROOT = ModelRoot;
-
     public sealed partial class AccessorSparse
     {
         #region lifecycle
 
         internal AccessorSparse() { }
+
+        internal AccessorSparse(int sparseCount, BufferView indices, int indicesOffset, IndexEncodingType indicesEncoding, BufferView values, int valuesOffset)
+        {
+            Guard.NotNull(indices, nameof(indices));
+            Guard.NotNull(values, nameof(values));
+            Guard.MustBeGreaterThanOrEqualTo(sparseCount, _countMinimum, nameof(sparseCount));
+
+            this._count = sparseCount;
+            this._indices = new AccessorSparseIndices(indices, indicesOffset, indicesEncoding);
+            this._values = new AccessorSparseValues(values, valuesOffset);            
+        }
 
         #endregion
 
@@ -19,23 +31,7 @@ namespace SharpGLTF.Schema2
 
         #endregion
 
-        #region API
-
-        protected override IEnumerable<ExtraProperties> GetLogicalChildren()
-        {
-            return base.GetLogicalChildren().ConcatElements(_indices, _values);
-        }
-
-        internal AccessorSparse(BufferView indices, int indicesOffset, IndexEncodingType indicesEncoding, BufferView values, int valuesOffset, int count)
-        {
-            Guard.NotNull(indices, nameof(indices));
-            Guard.NotNull(values, nameof(values));
-            Guard.MustBeGreaterThanOrEqualTo(count, _countMinimum, nameof(count));
-
-            this._count = count;
-            this._indices = new AccessorSparseIndices(indices, indicesOffset, indicesEncoding);
-            this._values = new AccessorSparseValues(values, valuesOffset);
-        }
+        #region API        
 
         internal KeyValuePair<Memory.IntegerArray, Memory.MemoryAccessor> _CreateMemoryAccessors(Accessor baseAccessor)
         {
@@ -93,10 +89,10 @@ namespace SharpGLTF.Schema2
 
         #region API
 
-        internal Memory.IntegerArray _GetIndicesArray(ROOT root, int count)
+        internal Memory.IntegerArray _GetIndicesArray(ROOT root, int sparseCount)
         {
             var srcBuffer = root.LogicalBufferViews[this._bufferView];
-            return new Memory.IntegerArray(srcBuffer.Content, this._byteOffset ?? 0, count, this._componentType);
+            return new Memory.IntegerArray(srcBuffer.Content, this._byteOffset ?? 0, sparseCount, this._componentType);
         }
 
         #endregion
@@ -143,10 +139,10 @@ namespace SharpGLTF.Schema2
 
         #region API
 
-        internal Memory.MemoryAccessor _GetMemoryAccessor(ROOT root, int count, Accessor baseAccessor)
+        internal Memory.MemoryAccessor _GetMemoryAccessor(ROOT root, int sparseCount, Accessor baseAccessor)
         {
             var view = root.LogicalBufferViews[this._bufferView];
-            var info = new Memory.MemoryAccessInfo(null, this._byteOffset ?? 0, count, view.ByteStride, baseAccessor.Dimensions, baseAccessor.Encoding, baseAccessor.Normalized);
+            var info = new Memory.MemoryAccessInfo(null, this._byteOffset ?? 0, sparseCount, view.ByteStride, baseAccessor.Format);
             return new Memory.MemoryAccessor(view.Content, info);
         }
 

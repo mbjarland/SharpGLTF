@@ -23,6 +23,11 @@ using System.Text;
 using System.Numerics;
 using System.Text.Json;
 
+using JSONREADER = System.Text.Json.Utf8JsonReader;
+using JSONWRITER = System.Text.Json.Utf8JsonWriter;
+using FIELDINFO = SharpGLTF.Reflection.FieldInfo;
+
+
 namespace SharpGLTF.Schema2
 {
 	using Collections;
@@ -36,6 +41,39 @@ namespace SharpGLTF.Schema2
 	[global::System.CodeDom.Compiler.GeneratedCodeAttribute("SharpGLTF.CodeGen", "1.0.0.0")]
 	partial class MaterialIridescence : ExtraProperties
 	{
+	
+		#region reflection
+	
+		public new const string SCHEMANAME = "KHR_materials_iridescence";
+		protected override string GetSchemaName() => SCHEMANAME;
+	
+		protected override IEnumerable<string> ReflectFieldsNames()
+		{
+			yield return "iridescenceFactor";
+			yield return "iridescenceIor";
+			yield return "iridescenceTexture";
+			yield return "iridescenceThicknessMaximum";
+			yield return "iridescenceThicknessMinimum";
+			yield return "iridescenceThicknessTexture";
+			foreach(var f in base.ReflectFieldsNames()) yield return f;
+		}
+		protected override bool TryReflectField(string name, out FIELDINFO value)
+		{
+			switch(name)
+			{
+				case "iridescenceFactor": value = FIELDINFO.From("iridescenceFactor",this, instance => instance._iridescenceFactor ?? 0); return true;
+				case "iridescenceIor": value = FIELDINFO.From("iridescenceIor",this, instance => instance._iridescenceIor ?? 1.3); return true;
+				case "iridescenceTexture": value = FIELDINFO.From("iridescenceTexture",this, instance => instance._iridescenceTexture); return true;
+				case "iridescenceThicknessMaximum": value = FIELDINFO.From("iridescenceThicknessMaximum",this, instance => instance._iridescenceThicknessMaximum ?? 400); return true;
+				case "iridescenceThicknessMinimum": value = FIELDINFO.From("iridescenceThicknessMinimum",this, instance => instance._iridescenceThicknessMinimum ?? 100); return true;
+				case "iridescenceThicknessTexture": value = FIELDINFO.From("iridescenceThicknessTexture",this, instance => instance._iridescenceThicknessTexture); return true;
+				default: return base.TryReflectField(name, out value);
+			}
+		}
+	
+		#endregion
+	
+		#region data
 	
 		private const Double _iridescenceFactorDefault = 0;
 		private const Double _iridescenceFactorMinimum = 0;
@@ -58,8 +96,11 @@ namespace SharpGLTF.Schema2
 		
 		private TextureInfo _iridescenceThicknessTexture;
 		
+		#endregion
 	
-		protected override void SerializeProperties(Utf8JsonWriter writer)
+		#region serialization
+	
+		protected override void SerializeProperties(JSONWRITER writer)
 		{
 			base.SerializeProperties(writer);
 			SerializeProperty(writer, "iridescenceFactor", _iridescenceFactor, _iridescenceFactorDefault);
@@ -70,19 +111,21 @@ namespace SharpGLTF.Schema2
 			SerializePropertyObject(writer, "iridescenceThicknessTexture", _iridescenceThicknessTexture);
 		}
 	
-		protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
+		protected override void DeserializeProperty(string jsonPropertyName, ref JSONREADER reader)
 		{
 			switch (jsonPropertyName)
 			{
-				case "iridescenceFactor": _iridescenceFactor = DeserializePropertyValue<Double?>(ref reader); break;
-				case "iridescenceIor": _iridescenceIor = DeserializePropertyValue<Double?>(ref reader); break;
-				case "iridescenceTexture": _iridescenceTexture = DeserializePropertyValue<TextureInfo>(ref reader); break;
-				case "iridescenceThicknessMaximum": _iridescenceThicknessMaximum = DeserializePropertyValue<Double?>(ref reader); break;
-				case "iridescenceThicknessMinimum": _iridescenceThicknessMinimum = DeserializePropertyValue<Double?>(ref reader); break;
-				case "iridescenceThicknessTexture": _iridescenceThicknessTexture = DeserializePropertyValue<TextureInfo>(ref reader); break;
+				case "iridescenceFactor": DeserializePropertyValue<MaterialIridescence, Double?>(ref reader, this, out _iridescenceFactor); break;
+				case "iridescenceIor": DeserializePropertyValue<MaterialIridescence, Double?>(ref reader, this, out _iridescenceIor); break;
+				case "iridescenceTexture": DeserializePropertyValue<MaterialIridescence, TextureInfo>(ref reader, this, out _iridescenceTexture); break;
+				case "iridescenceThicknessMaximum": DeserializePropertyValue<MaterialIridescence, Double?>(ref reader, this, out _iridescenceThicknessMaximum); break;
+				case "iridescenceThicknessMinimum": DeserializePropertyValue<MaterialIridescence, Double?>(ref reader, this, out _iridescenceThicknessMinimum); break;
+				case "iridescenceThicknessTexture": DeserializePropertyValue<MaterialIridescence, TextureInfo>(ref reader, this, out _iridescenceThicknessTexture); break;
 				default: base.DeserializeProperty(jsonPropertyName,ref reader); break;
 			}
 		}
+	
+		#endregion
 	
 	}
 
