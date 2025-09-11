@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<DirectedGraph xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" DataVirtualized="false" NeighborhoodDistance="0" xmlns="http://schemas.microsoft.com/vs/2009/dgml">
+  <Nodes>
+    <Node Id="SharpGLTF.Toolkit" Label="SharpGLTF.Toolkit (v.1.0.0)" Category="Root" />
+    <Node Id="SharpGLTF.Runtime" Label="SharpGLTF.Runtime (v.1.0.0)" />
+    <Node Id="SharpGLTF.Core" Label="SharpGLTF.Core (v.1.0.0)" />
+  </Nodes>
+  <Links>
+    <Link Source="SharpGLTF.Runtime" Target="SharpGLTF.Core" StrokeThickness="2" Stroke="White" />
+    <Link Source="SharpGLTF.Toolkit" Target="SharpGLTF.Runtime" StrokeThickness="2" Stroke="White" />
+  </Links>
+  <Categories>
+    <Category Id="Root" Label="Root" Background="Orange" />
+    <Category Id="Analyzer" Label="Analyzer" Background="Yellow" />
+    <Category Id="Package" Label="Package" Background="LightBlue" />
+  </Categories>
+  <Styles />
+  <Properties />
+</DirectedGraph>

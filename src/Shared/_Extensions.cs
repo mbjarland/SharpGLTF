@@ -1009,5 +1009,19 @@ namespace SharpGLTF
         }
 
         #endregion
+        
+    }
+
+    public static class SharpGLTFSettings 
+    {
+        #region system flags
+
+        /// <summary>
+        /// Whether or not to use the vectorized version of the bounds calculation.
+        /// </summary>
+        //  Note: This requires dotnet 6.0 or higher
+        public static bool UseOptimizedBoundsCalculation = false;
+
+        #endregion
     }
 }

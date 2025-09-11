@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SharpGLTF.Memory;
 
@@ -165,9 +166,27 @@ namespace SharpGLTF.Schema2
             bv = null;
             return false;
         }
-
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UpdateBounds()
+        {   
+            #if NET6_0_OR_GREATER
+            if (SharpGLTFSettings.UseOptimizedBoundsCalculation)
+            {
+                UpdateBoundsOptimized();
+            } else
+            {
+                UpdateBoundsStandard();
+            }
+            #else
+            UpdateBoundsStandard();
+            #endif
+        }
+        
 #if NET6_0_OR_GREATER
-        public void UpdateBounds() 
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateBoundsOptimized() 
         {
             this._min.Clear();
             this._max.Clear();
@@ -190,8 +209,11 @@ namespace SharpGLTF.Schema2
                 _max.Add(max[i]);
             }
         }
-#else        
-        public void UpdateBounds()
+        
+#endif        
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateBoundsStandard()
         {
             this._min.Clear();
             this._max.Clear();
@@ -240,7 +262,6 @@ namespace SharpGLTF.Schema2
                 _AppendToBounds(current);
             }*/
         }
-#endif
 
         private void _ResetBounds()
         {
